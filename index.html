@@ -147,7 +147,7 @@ th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}th{co
 
 <!-- ============ START ============ -->
 <section id="start" class="wrap">
-  <div class="logo"><div class="ic">🧩</div><div><b>Code Quest</b><span>Grade 6 · 15 levels of Excel, Scratch &amp; Python</span></div></div>
+  <div class="logo"><div class="ic">🧩</div><div><b>Code Quest</b><span>Grade 6 · 20 levels of Excel, Scratch &amp; Python</span></div></div>
   <div class="startgrid">
     <div class="card" style="padding:22px">
       <h2 style="margin:0">Join a race</h2>
@@ -225,13 +225,13 @@ th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}th{co
   <div class="card chips" id="chips" style="margin-top:18px"><span class="muted" id="chipsEmpty" style="font-size:20px;padding:8px">Waiting for players…</span></div>
 </section>
 <section id="hostTeach" class="wrap hidden" style="max-width:1300px">
-  <div class="hostbar"><div class="logo"><div class="ic">📖</div><div><b>Learning time</b><span>Code <b style="color:var(--yellow);font-family:var(--mono)" id="teachCode"></b> · students can still join · the race clock has not started</span></div></div>
+  <div class="hostbar"><div class="logo"><div class="ic">📖</div><div><b>Learning time</b><span>Join at <b style="color:#fff" class="joinLink"></b> · code <b style="color:var(--yellow);font-family:var(--mono)" id="teachCode"></b> · the race clock has not started</span></div></div>
     <div style="display:flex;gap:12px;align-items:center"><span class="pill" id="teachCount">0 players</span><button class="btn" id="startBtn2" style="font-size:18px">Start race ▶</button></div></div>
   <div class="card" style="padding:18px 20px;margin-top:6px"><div class="soft" style="font-size:17px;margin-bottom:12px">Choose the level to teach. Every student's screen jumps to it.</div><div id="teachLvls" style="display:flex;gap:12px;flex-wrap:wrap"></div></div>
   <div class="card" style="padding:14px 16px;margin-top:16px"><div class="soft" style="font-size:15px;margin-bottom:10px">✓ = finished that level</div><div id="teachChips" style="display:flex;flex-wrap:wrap;gap:10px"></div></div>
 </section>
 <section id="hostLive" class="wrap hidden" style="max-width:1300px">
-  <div class="hostbar"><div class="logo"><div class="ic">🧩</div><div><b>Code Quest race</b><span>Code <b style="color:var(--yellow);font-family:var(--mono)" id="liveCode"></b> · late joiners welcome</span></div></div>
+  <div class="hostbar"><div class="logo"><div class="ic">🧩</div><div><b>Code Quest race</b><span>Join at <b style="color:#fff" class="joinLink"></b> · code <b style="color:var(--yellow);font-family:var(--mono)" id="liveCode"></b> · late joiners welcome</span></div></div>
     <div class="timer" id="timer">30:00</div><button class="btn red" id="endBtn" style="font-size:18px">End race</button></div>
   <div class="live"><div class="card board" id="board"></div><div class="card feed"><h3>LIVE FEED</h3><div id="feedList"></div></div></div>
 </section>
@@ -536,6 +536,7 @@ const XL_CSS = `
 .lx .lgt th.hs{background:#d2d2d2;color:#0d5c32;border-bottom:2px solid #217346}
 .lx .lgt td{border:1px solid #e1e1e1;height:22px;padding:0 4px;white-space:nowrap;overflow:hidden;cursor:cell;line-height:20px}
 .lx .lgt td.n{text-align:right}.lx .lgt td.b{font-weight:bold}.lx .lgt td.e{color:#c00000}.lx .lgt td.hd{background:#e2efda;font-weight:bold}.lx .lgt td.o{overflow:visible}.lx .lgt td.o span{position:relative;z-index:1}
+.lx .lgt td.todo{background:#fff2cc;box-shadow:inset 0 0 0 1px #f1c232}.lx .lgt td.s.todo{background:#e8dcae}
 .lx .lgt td.s{background:#d8e9df}.lx .lgt td.s.hd{background:#c6dfc9}.lx .lgt td input{width:100%;border:0;outline:none;font:14px Calibri,Carlito,Arial;padding:0;height:20px;background:#fff}
 .lx .lsel{position:absolute;border:2px solid #217346;pointer-events:none;z-index:3}.lx .lfh{position:absolute;width:8px;height:8px;background:#217346;border:1px solid #fff;cursor:crosshair;z-index:4}
 .lx .lfill{position:absolute;border:2px dashed #217346;pointer-events:none;z-index:3}.lx .lpt{position:absolute;border:2px dashed #2f6fd6;pointer-events:none;z-index:3;background:rgba(47,111,214,.07)}
@@ -566,12 +567,12 @@ class ExcelPane {
     const tabs = ["Home", "Insert", "Page Layout", "Formulas", "Data", "Review", "View"];
     const tw = 34 + [...Array(XC).keys()].reduce((a, c) => a + this.w(c), 0);
     let t = `<table class="lgt" style="width:${tw}px;max-width:none"><colgroup><col style="width:34px">${[...Array(XC).keys()].map((c) => `<col style="width:${this.w(c)}px">`).join("")}</colgroup><tr><th></th>${[...Array(XC).keys()].map((c) => `<th class="${c >= s.c0 && c <= s.c1 ? "hs" : ""}">${xCol(c)}</th>`).join("")}</tr>`;
-    const heads = new Set(st.heads || ["0"]);
+    const heads = new Set(st.heads || ["0"]), todo = new Set((st.todo || []).map((ref) => { const q = xParseRef(ref); return q.r + "," + q.c; }));
     for (let r = 0; r < XR; r++) {
       t += `<tr><th class="${r >= s.r0 && r <= s.r1 ? "hs" : ""}" style="width:34px">${r + 1}</th>`;
       for (let c = 0; c < XC; c++) {
         const raw = xRaw(st, r, c), v = ui.showF ? raw : xShow(xValue(st, r, c)), ed = ui.edit && ui.edit.r === r && ui.edit.c === c && ui.edit.inCell;
-        const cls = [r >= s.r0 && r <= s.r1 && c >= s.c0 && c <= s.c1 ? "s" : "", !ui.showF && typeof xValue(st, r, c) === "number" ? "n" : "", isErr(xValue(st, r, c)) && !ui.showF ? "e" : "", heads.has(String(r)) && raw && !raw.startsWith("=") ? "hd" : "", v && xRaw(st, r, c + 1) === "" && typeof xValue(st, r, c) !== "number" ? "o" : ""].join(" ");
+        const cls = [r >= s.r0 && r <= s.r1 && c >= s.c0 && c <= s.c1 ? "s" : "", !ui.showF && typeof xValue(st, r, c) === "number" ? "n" : "", isErr(xValue(st, r, c)) && !ui.showF ? "e" : "", heads.has(String(r)) && raw && !raw.startsWith("=") ? "hd" : "", todo.has(r + "," + c) ? "todo" : "", v && xRaw(st, r, c + 1) === "" && typeof xValue(st, r, c) !== "number" ? "o" : ""].join(" ");
         t += `<td data-xc="${r},${c}" class="${cls}">${ed ? `<input data-xin="1" value="${wesc6(ui.edit.val)}">` : v ? `<span>${wesc6(v)}</span>` : ""}</td>`;
       }
       t += "</tr>";
@@ -589,17 +590,32 @@ class ExcelPane {
       <div class="lgw"><div class="lgi">${t}${this.overlays()}</div></div>
       <div class="lst"><span>${ui.edit ? (ui.edit.val.startsWith("=") ? "Point" : "Enter") : "Ready"}</span><b>Sheet1</b><span style="flex:1"></span><span>${stat}</span><span>100%</span></div>${menu}</div>`;
   }
-  after() { if (this.ui.edit) this.refocus(); }
+  after() {
+    this.place();
+    if (!this._fontsHooked && document.fonts) { this._fontsHooked = true; document.fonts.ready.then(() => this.place()); }
+    if (this.ui.edit) this.refocus();
+  }
+  // line the selection box up with the cells as the browser actually drew them (zoom, fonts and screen scaling change row heights)
+  place() {
+    const lgi = this.lab.root.querySelector(".lgi"); if (!lgi) return; const L = lgi.getBoundingClientRect(); if (!L.width) return;
+    const td = (r, c) => { const e = lgi.querySelector(`[data-xc="${r},${c}"]`); return e && e.getBoundingClientRect(); };
+    for (const el of lgi.querySelectorAll("[data-box]")) {
+      const [r0, c0, r1, c1, k] = el.dataset.box.split(",").map(Number), a = td(r0, c0), b = td(r1, c1); if (!a || !b) continue;
+      const x = a.left - L.left, y = a.top - L.top, w = b.right - a.left, h = b.bottom - a.top;
+      if (k === 2) { el.style.left = x + w - 5 + "px"; el.style.top = y + h - 5 + "px"; }
+      else { const d = k === 1 ? 1 : 0; el.style.left = x - d + "px"; el.style.top = y - d + "px"; el.style.width = w + d + "px"; el.style.height = h + d + "px"; }
+    }
+  }
   nsel() { const s = this.ui.sel; return { r0: Math.min(s.r0, s.r1), r1: Math.max(s.r0, s.r1), c0: Math.min(s.c0, s.c1), c1: Math.max(s.c0, s.c1) }; }
   cellBox(r, c) { let x = 34, y = 23; for (let k = 0; k < c; k++) x += this.w(k); y += r * 23; return { x, y, w: this.w(c), h: 23 }; }
   rangeBox(r0, c0, r1, c1) { const a = this.cellBox(r0, c0), b = this.cellBox(r1, c1); return { x: a.x, y: a.y, w: b.x + b.w - a.x, h: b.y + b.h - a.y }; }
   overlays() {
     const ui = this.ui, s = this.nsel(); let h = "";
-    if (ui.point) { const p = ui.point, b = this.rangeBox(Math.min(p.r0, p.r1), Math.min(p.c0, p.c1), Math.max(p.r0, p.r1), Math.max(p.c0, p.c1)); h += `<div class="lpt" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px"></div>`; }
+    if (ui.point) { const p = ui.point, b = this.rangeBox(Math.min(p.r0, p.r1), Math.min(p.c0, p.c1), Math.max(p.r0, p.r1), Math.max(p.c0, p.c1)); h += `<div class="lpt" data-box="${Math.min(p.r0, p.r1)},${Math.min(p.c0, p.c1)},${Math.max(p.r0, p.r1)},${Math.max(p.c0, p.c1)},0" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px"></div>`; }
     if (ui.edit) return h;
     const b = this.rangeBox(s.r0, s.c0, s.r1, s.c1);
-    h += `<div class="lsel" style="left:${b.x - 1}px;top:${b.y - 1}px;width:${b.w + 1}px;height:${b.h + 1}px"></div><div class="lfh" data-fh="1" title="Fill handle: drag down or right, or double-click" style="left:${b.x + b.w - 5}px;top:${b.y + b.h - 5}px"></div>`;
-    if (ui.fill) { const f = ui.fill, fb = this.rangeBox(Math.min(s.r0, f.r), Math.min(s.c0, f.c), Math.max(s.r1, f.r), Math.max(s.c1, f.c)); h += `<div class="lfill" style="left:${fb.x - 1}px;top:${fb.y - 1}px;width:${fb.w + 1}px;height:${fb.h + 1}px"></div>`; }
+    h += `<div class="lsel" data-box="${s.r0},${s.c0},${s.r1},${s.c1},1" style="left:${b.x - 1}px;top:${b.y - 1}px;width:${b.w + 1}px;height:${b.h + 1}px"></div><div class="lfh" data-fh="1" data-box="${s.r0},${s.c0},${s.r1},${s.c1},2" title="Fill handle: drag down or right, or double-click" style="left:${b.x + b.w - 5}px;top:${b.y + b.h - 5}px"></div>`;
+    if (ui.fill) { const f = ui.fill, fb = this.rangeBox(Math.min(s.r0, f.r), Math.min(s.c0, f.c), Math.max(s.r1, f.r), Math.max(s.c1, f.c)); h += `<div class="lfill" data-box="${Math.min(s.r0, f.r)},${Math.min(s.c0, f.c)},${Math.max(s.r1, f.r)},${Math.max(s.c1, f.c)},1" style="left:${fb.x - 1}px;top:${fb.y - 1}px;width:${fb.w + 1}px;height:${fb.h + 1}px"></div>`; }
     return h;
   }
   // ---- editing
@@ -650,6 +666,8 @@ class ExcelPane {
     if (hit && e.button === 0 && this.lastDown && this.lastDown.k === hit && now - this.lastDown.t < 450 && !ui.edit) { this.lastDown = null; e.preventDefault(); this.dbl(e); return true; }
     this.lastDown = hit ? { k: hit, t: now } : null;
     if (t.closest(".lrib") || t.closest(".ltabs") || t.closest(".lt") || t.closest(".lmenu")) return true;
+    // clicking the grid takes the keyboard focus (like Excel), so one click then typing always works
+    if (!t.matches("[data-xfb],[data-xin]")) { const R = this.lab.root; if (document.activeElement !== R) R.focus({ preventScroll: true }); }
     if (t.matches("[data-xfb]")) { if (!ui.edit) { ui.edit = { r: ui.act.r, c: ui.act.c, val: xRaw(this.st, ui.act.r, ui.act.c), inCell: false }; } return true; }
     if (t.matches("[data-xin]")) return true;
     if (t.closest("[data-fh]")) { ui.fill = { r: this.nsel().r1, c: this.nsel().c1 }; this.drag = { k: "fill" }; e.preventDefault(); return true; }
@@ -783,6 +801,9 @@ const newBlock = (op) => ({ id: "b" + Date.now().toString(36) + (SBID++), op, a:
 const sClone = (o) => JSON.parse(JSON.stringify(o));
 // every block that will actually run: blocks under a hat (loose blocks never run, like in Scratch)
 function sLive(st) { const out = []; const walk = (list) => list.forEach((b) => { out.push(b); if (b.b) out.push(b.b); walk(b.s1 || []); walk(b.s2 || []); }); (st.scripts || []).forEach((s) => { if (s.list[0] && SB[s.list[0].op].sh === "hat") walk(s.list); }); return out; }
+const sSig = (st) => JSON.stringify((st.scripts || []).map((s) => s.list), (k, v) => (k === "id" ? undefined : v));
+const sRan = (st) => !!st.run && !!st.run.done && st.run.sig === sSig(st);            // the newest blocks were tested with the green flag
+const sFromRun = (st) => ({ ...st, stage: { ...st.stage, sprite: { ...st.run.start } } }); // checks replay the run from where Robo started
 const sUses = (st, op) => sLive(st).some((b) => b.op === op);
 const sCount = (st, op) => sLive(st).filter((b) => !op || b.op === op).length;
 
@@ -909,7 +930,7 @@ class ScratchPane {
   constructor(lab) { this.lab = lab; this.ui = { cat: "motion", menu: null }; this.run = null; this.raf = 0; }
   get st() { return this.lab.st; }
   reset() { this.stopRun(); this.ui = { cat: "motion", menu: null }; }
-  avail() { return this.st.palette || Object.keys(SB); }
+  avail() { return Object.keys(SB); }
   menuOpts(b, m) {
     if (m === "touch") return ["edge", ...(this.st.stage.props || []).map((p) => p.name)];
     return m;
@@ -940,10 +961,10 @@ class ScratchPane {
       <div class="sbody"><div class="scats">${CATS.filter(([k]) => Object.keys(SB).some((o) => SB[o].cat === k && av.has(o))).map(([k, n, c]) => `<div data-cat="${k}" class="${this.ui.cat === k ? "on" : ""}"><i style="background:${c}"></i>${n}</div>`).join("")}</div>
       <div class="spal" data-pal="1">${pal}</div>
       <div class="sws" data-ws="1"><div class="swi">${scripts}</div></div>
-      <div class="sstage"><div class="sbar"><button class="sgo${this.run ? " on" : ""}" data-sa="go" title="Green flag: start">🚩</button><button class="sst" data-sa="stop" title="Stop">⏹</button><span style="flex:1"></span></div>
+      <div class="sstage"><div class="sbar"><button class="sgo${this.run && this.run.threads.length ? " on" : ""}" data-sa="go" title="Green flag: start">🚩</button><button class="sst" data-sa="stop" title="Stop">⏹</button><span style="flex:1"></span></div>
       <canvas width="480" height="360" tabindex="0" data-stage="1"></canvas>
       <div class="sinfo">Sprite <b>Robo</b> &nbsp; x: <b>${Math.round(p.x)}</b> &nbsp; y: <b>${Math.round(p.y)}</b> &nbsp; direction: <b>${Math.round(p.dir ?? 90)}</b></div>
-      <div class="stip">Drag blocks from the left and snap them together. Click 🚩 to run. While it runs, click the stage, then press keys.</div></div></div>
+      <div class="stip">Snap blocks together and click 🚩 to test. Click a script to run just that script. Drag Robo to move it. For key scripts: click 🚩, click the stage, then press the keys.</div></div></div>
       ${this.ui.menu ? `<div class="smenu" style="left:${this.ui.menu.x}px;top:${this.ui.menu.y}px"><div data-sm="dup">Duplicate</div><div data-sm="del">Delete Block</div></div>` : ""}</div>`;
   }
   after() { this.draw(); if (this.ui.palScroll != null) { const pl = this.lab.root.querySelector("[data-pal]"); if (pl) pl.scrollTop = this.ui.palScroll; } const ws = this.lab.root.querySelector("[data-ws]"); if (ws && this.ui.wsScroll) [ws.scrollLeft, ws.scrollTop] = this.ui.wsScroll; }
@@ -951,7 +972,7 @@ class ScratchPane {
   // ---------- stage drawing
   draw() {
     const cv = this.lab.root.querySelector("canvas[data-stage]"); if (!cv) return;
-    const g = cv.getContext("2d"), st = this.st, p = this.run ? this.run.sp : { ...st.stage.sprite, vis: true, size: st.stage.sprite.size ?? 100, dir: st.stage.sprite.dir ?? 90 };
+    const g = cv.getContext("2d"), st = this.st, p = this.run ? this.run.sp : { vis: true, ...st.stage.sprite, size: st.stage.sprite.size ?? 100, dir: st.stage.sprite.dir ?? 90 };
     g.fillStyle = st.stage.bg || "#ffffff"; g.fillRect(0, 0, 480, 360);
     const X = (x) => 240 + x, Y = (y) => 180 - y;
     for (const pr of st.stage.props || []) {
@@ -970,13 +991,31 @@ class ScratchPane {
     }
   }
   go() {
-    this.stopRun(); this.run = new SRun(sClone(this.st)); this.run.green(); let last = performance.now();
-    const tick = (now) => { if (!this.run) return; const dt = Math.min(.1, (now - last) / 1000); last = now; this.run.step(dt); this.draw(); this.info();
-      if (this.run.threads.length) this.raf = requestAnimationFrame(tick); else { this.run.done = true; const b = this.lab.root.querySelector(".sgo"); if (b) b.classList.remove("on"); } };
-    this.raf = requestAnimationFrame(tick); this.lab.render(); const cv = this.lab.root.querySelector("canvas[data-stage]"); cv && cv.focus();
+    this.finish();
+    this.st.run = { sig: sSig(this.st), start: { ...this.st.stage.sprite }, keys: [], done: false };
+    this.run = new SRun(sClone(this.st)); this.run.green(); this.lab.quiet();
+    this.lab.render(); this.loop(); const cv = this.lab.root.querySelector("canvas[data-stage]"); cv && cv.focus();
+  }
+  loop() {
+    if (this.raf) return; let last = performance.now();
+    const tick = (now) => {
+      this.raf = 0; const run = this.run; if (!run) return;
+      run.step(Math.min(.1, (now - last) / 1000)); last = now; this.draw(); this.info();
+      const r = this.st.run; if (r && !r.done && r.sig === sSig(this.st) && (!run.threads.length || run.t >= 4)) { r.done = true; this.keep(); this.lab.quiet(); }
+      if (run.threads.length) this.raf = requestAnimationFrame(tick); else { this.keep(); const b = this.lab.root.querySelector(".sgo"); if (b) b.classList.remove("on"); }
+    };
+    this.raf = requestAnimationFrame(tick);
+  }
+  keep() { if (!this.run) return; const p = this.run.sp; this.st.stage.sprite = { x: +p.x.toFixed(2), y: +p.y.toFixed(2), dir: p.dir, size: p.size }; }   // Robo stays where it stopped, like Scratch
+  finish() { cancelAnimationFrame(this.raf); this.raf = 0; if (this.run) { this.keep(); this.run.threads = []; } }
+  runScript(sid) {                                   // clicking a script runs just that script, like Scratch
+    const sc = this.st.scripts.find((x) => x.id === sid); if (!sc) return;
+    if (!this.run) this.run = new SRun(sClone(this.st));
+    const list = SB[sc.list[0].op].sh === "hat" ? sc.list.slice(1) : sc.list;
+    this.run.st = sClone(this.st); this.run.threads = this.run.threads.filter((t) => t.sid !== sid); this.run.threads.push({ sid, g: this.run.runList(list) }); this.loop();
   }
   info() { const el = this.lab.root.querySelector(".sinfo"); if (el && this.run) { const p = this.run.sp; el.innerHTML = `Sprite <b>Robo</b> &nbsp; x: <b>${Math.round(p.x)}</b> &nbsp; y: <b>${Math.round(p.y)}</b> &nbsp; direction: <b>${Math.round(p.dir)}</b>`; } }
-  stopRun() { cancelAnimationFrame(this.raf); this.run = null; }
+  stopRun() { this.finish(); this.run = null; }
   // ---------- finding blocks in the tree
   locate(id) {
     let hit = null;
@@ -990,7 +1029,11 @@ class ScratchPane {
     const t = e.target, ui = this.ui;
     if (ui.menu && !t.closest(".smenu")) { ui.menu = null; this.lab.render(); }
     if (t.closest(".bin,.bsel,.bcol,.smenu,[data-sa],[data-cat]")) return true;
-    if (t.matches("canvas[data-stage]")) { if (this.run) { const r = t.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 480 - 240, y = 180 - (e.clientY - r.top) / r.height * 360, p = this.run.sp; if (Math.hypot(x - p.x, y - p.y) < this.run.R() + 6) this.run.click(); } return true; }
+    if (t.matches("canvas[data-stage]")) {
+      const r = t.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 480 - 240, y = 180 - (e.clientY - r.top) / r.height * 360, p = this.run ? this.run.sp : this.st.stage.sprite, R = 26 * (p.size ?? 100) / 100;
+      if (Math.hypot(x - p.x, y - p.y) < R + 8) { if (this.run && this.run.threads.length) this.run.click(); else this.sdrag = { snap: JSON.stringify(this.st), dx: x - p.x, dy: y - p.y, rect: r }; }
+      return true;
+    }
     if (e.button !== 0) return true;
     const pb = t.closest("[data-pop]"), bk = t.closest(".bk[data-bid]");
     if (!pb && !bk) return true;
@@ -1037,15 +1080,19 @@ class ScratchPane {
     if (best && best.kind === "before") { best.px = best.px0; best.py = best.py0; }
     return best;
   }
-  move(e) { const d = this.drag; if (!d) return false; if (Math.hypot(e.clientX - d.sx, e.clientY - d.sy) > 4) d.moved = true; this.paintDrag(e); return true; }
+  move(e) {
+    const sd = this.sdrag;
+    if (sd) { const r = sd.rect, x = (e.clientX - r.left) / r.width * 480 - 240 - sd.dx, y = 180 - (e.clientY - r.top) / r.height * 360 - sd.dy, sp = this.st.stage.sprite; sp.x = Math.round(Math.max(-240, Math.min(240, x))); sp.y = Math.round(Math.max(-180, Math.min(180, y))); if (this.run) { this.run.sp.x = sp.x; this.run.sp.y = sp.y; } sd.moved = true; this.draw(); const el = this.lab.root.querySelector(".sinfo"); if (el) el.innerHTML = `Sprite <b>Robo</b> &nbsp; x: <b>${sp.x}</b> &nbsp; y: <b>${sp.y}</b> &nbsp; direction: <b>${Math.round(sp.dir ?? 90)}</b>`; return true; }
+    const d = this.drag; if (!d) return false; if (Math.hypot(e.clientX - d.sx, e.clientY - d.sy) > 4) d.moved = true; this.paintDrag(e); return true; }
   up(e) {
+    const sd = this.sdrag; if (sd) { this.sdrag = null; if (sd.moved) this.lab.commitSnap(sd.snap); return true; }
     const d = this.drag; if (!d) return false; this.drag = null;
     const box = this.lab.root.querySelector(".ls"); box.querySelector(".sdrag")?.remove(); box.querySelector(".sins")?.remove();
     const overPal = document.elementsFromPoint(e.clientX, e.clientY).some((el) => el.dataset && (el.dataset.pal || el.classList.contains("scats")));
     const ws = this.lab.root.querySelector("[data-ws]"), wr = ws.getBoundingClientRect();
     const t = d.target;
     if (!d.moved && !d.fromPal) {                            // a click on a block in the workspace: run that script (like Scratch)
-      this.putBack(d); this.lab.render(); return true;
+      this.putBack(d); this.lab.render(); const h = this.locate(d.clickId); if (h && h.script) this.runScript(h.script.id); return true;
     }
     if (overPal || (!t && (e.clientX < wr.left || e.clientX > wr.right || e.clientY < wr.top || e.clientY > wr.bottom))) { if (d.fromPal) { this.lab.render(); return true; } this.lab.commitSnap(d.snapshot); return true; }
     if (t && t.kind === "slot") { const host = this.blockById(t.id); if (host && !host.b) host.b = d.stack[0]; }
@@ -1058,7 +1105,7 @@ class ScratchPane {
   putBack(d) { this.lab.st = JSON.parse(d.snapshot); }
   click(e) {
     const t = e.target, ui = this.ui;
-    const sa = t.closest("[data-sa]"); if (sa) { if (sa.dataset.sa === "go") this.go(); else { this.stopRun(); this.lab.render(); } return true; }
+    const sa = t.closest("[data-sa]"); if (sa) { if (sa.dataset.sa === "go") this.go(); else { this.finish(); if (this.run) { this.run.sp.say = null; this.run.stopped = true; } this.lab.quiet(); this.lab.render(); } return true; }
     const c = t.closest("[data-cat]"); if (c) { ui.cat = c.dataset.cat; const pal = this.lab.root.querySelector("[data-pal]"), h = pal.querySelector(`[data-sec="${c.dataset.cat}"]`); if (h) pal.scrollTop = h.offsetTop - 6; this.saveScroll(); this.lab.root.querySelectorAll("[data-cat]").forEach((x) => x.classList.toggle("on", x === c)); return true; }
     const col = t.closest(".bcol"); if (col && !t.closest("[data-pop]")) { const b = this.blockById(col.dataset.bid); const i = +col.dataset.ai; const pal = [...new Set([...(this.st.stage.props || []).map((p) => p.color), ...PALETTE_COLS])]; const k = pal.indexOf(b.a[i]); const nv = pal[(k + 1) % pal.length]; this.saveScroll(); this.lab.commit((st) => { const bb = this.locateIn(st, col.dataset.bid); bb.a[i] = nv; }); return true; }
     const sm = t.closest("[data-sm]"); if (sm) { const id = ui.menu.id; ui.menu = null; this.saveScroll();
@@ -1082,7 +1129,11 @@ class ScratchPane {
     if (t.classList && t.classList.contains("bin")) { if (e.key === "Enter") t.blur(); return true; }
     if (t.matches && t.matches("input,textarea,select")) return true;
     const k = { " ": "space", ArrowUp: "up arrow", ArrowDown: "down arrow", ArrowLeft: "left arrow", ArrowRight: "right arrow" }[e.key] || (e.key.length === 1 ? e.key.toLowerCase() : null);
-    if (k && this.run) { e.preventDefault(); if (!e.repeat || true) this.run.keyDown(k); return true; }
+    if (k && this.run && !this.run.stopped) {
+      e.preventDefault(); this.run.keyDown(k); this.loop();
+      const r = this.st.run; if (r && r.sig === sSig(this.st) && !r.keys.includes(k)) { r.keys.push(k); this.lab.quiet(); }
+      return true;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); this.lab.undo(); return true; }
     if (k === "space" || e.key.startsWith("Arrow")) e.preventDefault();
     return true;
@@ -1174,57 +1225,87 @@ const PYC = {            // check helpers (async)
 };
 const PY_CSS = `
 .lp{display:flex;flex-direction:column;height:100%;background:#1e1e1e;color:#d4d4d4;font:13px "Segoe UI",Arial,sans-serif}
-.lp *{box-sizing:border-box}.lp .pt{height:32px;flex:none;background:#2d2d2d;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:12.5px;color:#ccc}
-.lp .pt .tab{background:#1e1e1e;padding:8px 14px;border-top:2px solid #3794ff;color:#fff}.lp .prun{margin-left:auto;background:#2e7d32;color:#fff;border:0;border-radius:5px;padding:5px 14px;font:600 13px Arial;cursor:pointer}.lp .prun:hover{background:#388e3c}
+.lp *{box-sizing:border-box}.lp .pt{height:34px;flex:none;background:#2d2d2d;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:12.5px;color:#ccc}
+.lp .pt .tab{background:#1e1e1e;padding:9px 14px;border-top:2px solid #3794ff;color:#fff}.lp .prun{margin-left:auto;background:#2e7d32;color:#fff;border:0;border-radius:5px;padding:6px 16px;font:600 14px Arial;cursor:pointer}.lp .prun:hover{background:#388e3c}
 .lp .pbody{flex:1;min-height:0;display:flex;flex-direction:column}
-.lp .ped{flex:1.3;min-height:0;display:flex;font:15px/1.55 Consolas,"Liberation Mono",monospace;overflow:hidden}
-.lp .pgut{width:44px;flex:none;text-align:right;padding:10px 8px 10px 0;color:#858585;background:#1e1e1e;overflow:hidden;white-space:pre}
-.lp textarea{flex:1;resize:none;border:0;outline:none;background:#1e1e1e;color:#9cdcfe;font:inherit;padding:10px;white-space:pre;tab-size:4;caret-color:#fff}
-.lp .pin{flex:none;display:flex;gap:10px;align-items:center;padding:6px 10px;background:#252526;border-top:1px solid #333;font-size:12.5px}
-.lp .pin textarea{flex:none;width:260px;height:30px;font:13px Consolas,monospace;padding:4px 8px;background:#3c3c3c;color:#fff;border:1px solid #555;border-radius:4px}
+.lp .ped{flex:1.25;min-height:0;display:flex;font:16px/1.55 Consolas,"Liberation Mono",monospace;overflow:hidden}
+.lp .pgut{width:46px;flex:none;text-align:right;padding:10px 10px 10px 0;color:#858585;background:#1e1e1e;overflow:hidden;white-space:pre}
+.lp .pwrap{flex:1;position:relative;min-width:0}
+.lp .pwrap pre,.lp .pwrap textarea{position:absolute;inset:0;margin:0;padding:10px;font:inherit;white-space:pre;tab-size:4;overflow:auto;border:0;letter-spacing:0}
+.lp .pwrap pre{color:#d4d4d4;pointer-events:none;background:#1e1e1e;overflow:hidden}
+.lp .pwrap textarea{resize:none;outline:none;background:transparent;color:transparent;caret-color:#fff;z-index:1}
+.lp .pwrap textarea::selection{background:rgba(38,79,120,.85);color:transparent}
+.lp .k{color:#c586c0}.lp .f{color:#dcdcaa}.lp .s{color:#ce9178}.lp .n{color:#b5cea8}.lp .c{color:#6a9955;font-style:italic}.lp .v{color:#9cdcfe}.lp .b{color:#569cd6}
 .lp .pterm{flex:1;min-height:0;border-top:1px solid #333;display:flex;flex-direction:column}.lp .pterm .h{padding:5px 12px;font-size:11px;letter-spacing:1px;color:#ccc;border-bottom:1px solid #333}
-.lp .pout{flex:1;overflow:auto;padding:8px 12px;font:14px/1.5 Consolas,"Liberation Mono",monospace;white-space:pre-wrap;color:#ddd}
+.lp .pout{flex:1;overflow:auto;padding:8px 12px;font:15px/1.5 Consolas,"Liberation Mono",monospace;white-space:pre-wrap;color:#ddd}
 .lp .pout .in{color:#4ec9b0}.lp .pout .err{color:#f48771}.lp .pout .note{color:#888}
+.lp .pask{background:transparent;border:0;border-bottom:1px solid #4ec9b0;color:#4ec9b0;font:inherit;outline:none;min-width:200px;padding:0 2px}
 `;
+const PY_KW = new Set("if elif else for while in def return import from as and or not break continue pass class with try except finally lambda global is del raise yield".split(" "));
+const PY_CONST = new Set(["True", "False", "None"]);
+const PY_FN = new Set("print input int str float len range round abs max min sum list type bool".split(" "));
+function pyHL(src) {
+  const re = /(#[^\n]*)|([fFrRbB]{0,2}(?:"""[\s\S]*?(?:"""|$)|'''[\s\S]*?(?:'''|$)|"(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?))|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)|([\s\S])/g;
+  let out = "", m;
+  while ((m = re.exec(src))) {
+    const [tok, com, str, num, id] = m, e = wesc6(tok);
+    if (com) out += `<span class="c">${e}</span>`;
+    else if (str) out += `<span class="s">${e}</span>`;
+    else if (num) out += `<span class="n">${e}</span>`;
+    else if (id) out += PY_KW.has(id) ? `<span class="k">${e}</span>` : PY_CONST.has(id) ? `<span class="b">${e}</span>` : PY_FN.has(id) && /^\s*\(/.test(src.slice(re.lastIndex)) ? `<span class="f">${e}</span>` : `<span class="v">${e}</span>`;
+    else out += e;
+  }
+  return out + "\n";
+}
 class PythonPane {
-  constructor(lab) { this.lab = lab; this.out = null; this.inputs = ""; }
+  constructor(lab) { this.lab = lab; this.out = null; this.answers = []; }
   get st() { return this.lab.st; }
-  reset() { this.out = null; this.inputs = (this.st.inputs || []).join("\n"); if (!PY.started) pyStart(); }
+  reset() { this.out = null; this.answers = []; if (!PY.started) pyStart(); }
   html() {
     const code = this.st.code || "", n = code.split("\n").length;
-    return `<div class="lp"><div class="pt"><span class="tab">main.py</span><span>Python 3</span><button class="prun" data-pa="run">▶ Run</button></div>
-      <div class="pbody"><div class="ped"><div class="pgut">${[...Array(n).keys()].map((i) => i + 1).join("\n")}</div><textarea data-pcode="1" spellcheck="false" autocapitalize="off" autocomplete="off">${wesc6(code)}</textarea></div>
-      <div class="pin">⌨️ <b>Input</b> (what you type when the program asks, one per line):<textarea data-pinp="1" spellcheck="false">${wesc6(this.inputs)}</textarea></div>
+    return `<div class="lp"><div class="pt"><span class="tab">main.py</span><span>Python 3</span><button class="prun" data-pa="run" title="Run (F5)">▶ Run</button></div>
+      <div class="pbody"><div class="ped"><div class="pgut">${[...Array(n).keys()].map((i) => i + 1).join("\n")}</div><div class="pwrap"><pre class="phl">${pyHL(code)}</pre><textarea data-pcode="1" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">${wesc6(code)}</textarea></div></div>
       <div class="pterm"><div class="h">TERMINAL</div><div class="pout" data-pout="1">${this.outHTML()}</div></div></div></div>`;
   }
   outHTML() {
     const r = this.out;
-    if (!r) return `<span class="note">Press ▶ Run to see what your program prints.${PY.ready && !PY.failed ? "" : " (Python is loading…)"}</span>`;
+    if (!r) return `<span class="note">Press ▶ Run to see what your program prints.</span>`;
     if (r.loading) return `<span class="note">Running…</span>`;
     if (r.error === "NOPYTHON") return `<span class="err">Could not load Python. Check the internet connection (the school filter must allow cdn.jsdelivr.net), then reload the page.</span>`;
     if (r.error === "TIMEOUT") return `<span class="err">⏱ The program ran for too long and was stopped.</span>`;
     let h = `<span class="note">&gt; python main.py</span>\n` + wesc6(r.out).replace(/\u0001([^\u0002]*)\u0002/g, (m, v) => `<span class="in">${v}</span>`);
+    if (r.asking) return h + `<input class="pask" data-pask="1" spellcheck="false" autocomplete="off" placeholder="type here, then press Enter">`;
     if (!r.out && !r.error) h += `<span class="note">(nothing printed: use print() to show something)</span>`;
     if (r.error) h += `<span class="err">✖ ${r.line ? "Line " + r.line + ": " : ""}${wesc6(r.error)}</span>`;
     return h;
   }
   after() {}
-  async runNow() { this.out = { loading: true }; this.paintOut(); const ins = this.inputs.replace(/\r/g, ""); this.out = await pyRun(this.st.code, ins.length ? ins.split("\n") : []); this.paintOut(); }
-  paintOut() { const el = this.lab.root.querySelector("[data-pout]"); if (el) el.innerHTML = this.outHTML(); }
+  // input() works like a real terminal: the program runs again with every answer typed so far
+  async runNow(fresh = true) {
+    if (fresh) { this.answers = []; this.out = { loading: true }; this.paintOut(); }
+    const r = await pyRun(this.st.code, this.answers);
+    if (r.error && /^EOFError: the program asked for more input/.test(r.error)) { r.asking = true; r.error = null; }
+    this.out = r; this.paintOut();
+    // a finished run (no more questions) is what unlocks "Level complete", like 🚩 in Scratch
+    if (!r.asking && !r.loading) { this.lab.st.ran = { code: this.lab.st.code, ok: !r.error }; this.lab.quiet(); }
+    if (r.asking) { const i = this.lab.root.querySelector("[data-pask]"); if (i) i.focus(); }
+  }
+  paintOut() { const el = this.lab.root.querySelector("[data-pout]"); if (el) { el.innerHTML = this.outHTML(); el.scrollTop = el.scrollHeight; } }
+  syncHL(t) { const pre = t.closest(".pwrap").querySelector("pre"), g = this.lab.root.querySelector(".pgut"); pre.innerHTML = pyHL(t.value); pre.scrollTop = t.scrollTop; pre.scrollLeft = t.scrollLeft; if (g) { g.textContent = [...Array(t.value.split("\n").length).keys()].map((i) => i + 1).join("\n"); g.scrollTop = t.scrollTop; } }
   down() { return true; } move() { return false; } up() { return false; } dbl() { return true; } context() { return false; } change() { return false; }
   click(e) { if (e.target.closest('[data-pa="run"]')) this.runNow(); return true; }
   input(e) {
     const t = e.target;
-    if (t.dataset.pcode) { this.lab.st.code = t.value; const g = this.lab.root.querySelector(".pgut"); if (g) g.textContent = [...Array(t.value.split("\n").length).keys()].map((i) => i + 1).join("\n"); this.lab.typed(); return true; }
-    if (t.dataset.pinp) { this.inputs = t.value; return true; }
+    if (t.dataset.pcode) { this.lab.st.code = t.value; this.syncHL(t); this.lab.typed(); return true; }
     return false;
   }
   key(e) {
     const t = e.target;
+    if (t.dataset && t.dataset.pask) { if (e.key === "Enter") { e.preventDefault(); this.answers.push(t.value); this.runNow(false); } return true; }
     if (t.dataset && t.dataset.pcode) {
       if (e.key === "Tab") { e.preventDefault(); const s = t.selectionStart; t.setRangeText("    ", s, t.selectionEnd, "end"); this.input({ target: t }); return true; }
-      if (e.key === "Enter") { const s = t.selectionStart, line = t.value.slice(0, s).split("\n").pop(); let ind = line.match(/^\s*/)[0]; if (/:\s*$/.test(line)) ind += "    "; e.preventDefault(); t.setRangeText("\n" + ind, s, t.selectionEnd, "end"); this.input({ target: t }); return true; }
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); this.runNow(); return true; }
+      if (e.key === "Enter" && !e.ctrlKey) { const s = t.selectionStart, line = t.value.slice(0, s).split("\n").pop(); let ind = line.match(/^\s*/)[0]; if (/:\s*$/.test(line)) ind += "    "; e.preventDefault(); t.setRangeText("\n" + ind, s, t.selectionEnd, "end"); this.input({ target: t }); return true; }
+      if (e.ctrlKey && e.key === "Enter") { e.preventDefault(); this.runNow(); return true; }
     }
     if (e.key === "F5") { e.preventDefault(); this.runNow(); }
     return true;
@@ -1242,9 +1323,10 @@ class G6Lab {
     on("pointermove", (e) => this.pane.move(e), window); on("pointerup", (e) => this.pane.up(e), window);
     on("click", (e) => this.pane.click(e)); on("dblclick", (e) => this.pane.dbl(e)); on("contextmenu", (e) => this.pane.context(e));
     on("change", (e) => this.pane.change(e)); on("input", (e) => this.pane.input(e));
+    root.addEventListener("scroll", (e) => { const t = e.target; if (t.dataset && t.dataset.pcode && this.pane.syncHL) this.pane.syncHL(t); }, true);
     on("keydown", (e) => { if (document.querySelector("#overlay:not(.hidden)")) return; if (this.root.contains(e.target) || e.target === document.body) this.pane.key(e); }, window);
     on("keyup", (e) => this.pane.keyup && this.pane.keyup(e), window);
-    root.style.position = "relative";
+    root.style.position = "relative"; root.tabIndex = -1; root.style.outline = "none";
     new ResizeObserver(() => this.st && this.st.kind !== "python" && this.render()).observe(root);
   }
   visible() { return this.root.isConnected && this.root.offsetParent !== null; }
@@ -1255,183 +1337,227 @@ class G6Lab {
   commitSnap(snap) { this.hist.push(snap); this.render(); this.onChange(JSON.parse(JSON.stringify(this.st))); }
   typed() { const now = Date.now(); if (!this._lt || now - this._lt > 1500) this.hist.push(JSON.stringify(this.st)); this._lt = now; this.onChange(JSON.parse(JSON.stringify(this.st))); }
   undo() { if (!this.hist.length) return; this.st = JSON.parse(this.hist.pop()); this.render(); this.onChange(JSON.parse(JSON.stringify(this.st))); }
+  quiet() { this.onChange(JSON.parse(JSON.stringify(this.st))); }
   toast(t) { const d = document.createElement("div"); d.className = "g6toast"; d.textContent = t; this.root.appendChild(d); setTimeout(() => d.remove(), 2600); }
 }
 
 const SIM_CLASS = G6Lab;
-// Code Quest · Grade 6 · Excel, Scratch and Python. Levels 1-3 are taught by the teacher (learning time); levels 4-15 are raced.
-const sheet = (file, rows, colW, heads = ["0"]) => ({ kind: "excel", file, cells: rows.map((r) => r.map(String)), colW: colW || {}, heads });
-const sc = (file, stage, scripts = [], palette) => ({ kind: "scratch", file, stage, scripts, palette });
-const py = (code, inputs = []) => ({ kind: "python", code: code.join("\n") + "\n", inputs });
+// Code Quest · Grade 6 · Excel, Scratch and Python. Levels 1-8 are taught by the teacher (learning time); levels 9-20 are raced.
+const sheet = (file, rows, colW, heads, todo) => ({ kind: "excel", file, cells: rows.map((r) => r.map(String)), colW: colW || {}, heads: heads || ["0"], todo: todo || [] });
+const sc = (file, stage, scripts = []) => ({ kind: "scratch", file, stage, scripts });
+const py = (code) => ({ kind: "python", code: code.join("\n") + "\n" });
 // Scratch helpers: B(op, args..., {s1, s2, b}) makes a block; script(x, y, ...blocks)
 let LID = 1;
-const B = (op, ...rest) => { const o = typeof rest[rest.length - 1] === "object" && rest.length && !Array.isArray(rest[rest.length - 1]) ? rest.pop() : {}; const b = { id: "L" + LID++, op, a: rest.length ? rest.map(String) : [...(SB[op].d || [])], s1: o.s1 || [], s2: o.s2 || [], b: o.b || null }; return b; };
+const B = (op, ...rest) => { const o = rest.length && typeof rest[rest.length - 1] === "object" ? rest.pop() : {}; return { id: "L" + LID++, op, a: rest.length ? rest.map(String) : [...(SB[op].d || [])], s1: o.s1 || [], s2: o.s2 || [], b: o.b || null }; };
 const script = (x, y, ...list) => ({ id: "S" + LID++, x, y, list });
 const ROBO = (x, y, dir = 90) => ({ x, y, dir, size: 100 });
-// Excel: a check that also passes after the data is changed (so typed-in answers don't count)
+// Excel: a check that also passes after the numbers change (so typed-in answers don't count)
 const robust = (fn, changes) => (st) => fn(st) && fn(XS.setMany(st, changes));
 const rows = (col, a, b) => Array.from({ length: b - a + 1 }, (_, k) => col + (a + k));
 const near = (v, w) => typeof v === "number" && Math.abs(v - w) < 1e-6;
+const N = (s, ref) => { const v = XS.raw(s, ref); return v === "" ? null : +v; };
+// Scratch: every check waits for a green-flag test of the newest blocks, then replays that run
+const RUN = ["You pressed ▶ Run and your program finished", (s) => !!s.ran && s.ran.ok && s.ran.code === s.code];
+const FLAG = ["You clicked 🚩 to test your newest blocks", (s) => sRan(s)];
+const SX = (label, fn) => [label, (s) => sRan(s) && fn(sFromRun(s))];
+const keysTried = (s) => (s.run && s.run.sig === sSig(s) ? s.run.keys : []);
+const rightPresses = (n, from = .3, gap = .12) => Array.from({ length: n }, (_, k) => ({ t: from + k * gap, key: "right arrow" }));
+// Python
+const HELLO = /^hello,?\s*world[.!]*$/i;
 
-// ---------------------------------------------------------------- level data
-const SHOP = sheet("shopping_list.xlsx", [["Item", "Price", "Qty", "Total"], ["Pencil", 3000, 4, ""], ["Notebook", 8000, 3, ""], ["Eraser", 2000, 5, ""], ["Ruler", 5000, 2, ""], ["Grand total", "", "", ""]], { 0: 100 }, ["0", "5"]);
-const SNACK = sheet("snack_shop.xlsx", [["Snack", "Cost price", "Selling price", "Profit"], ["Chips", 4000, 6000, ""], ["Juice", 3000, 5000, ""], ["Cookies", 5000, 8000, ""], ["Candy", 1000, 2000, ""], ["Bread", 6000, 9000, ""], ["Total profit", "", "", ""]], { 0: 100, 1: 90, 2: 100 }, ["0", "6"]);
-const SCORES = sheet("test_scores.xlsx", [["Name", "Score"], ["Ayu", 78], ["Budi", 65], ["Citra", 92], ["Dimas", 58], ["Eka", 85], ["Fajar", 70], ["Gita", 88], ["Hana", 64], ["", ""], ["Average", ""], ["Highest", ""], ["Lowest", ""]], { 0: 100 }, ["0", "10", "11", "12"]);
-const READ = sheet("reading_log.xlsx", [["Name", "Week 1", "Week 2", "Week 3", "Week 4", "Total pages", "Weeks read"], ["Ayu", 40, 35, "", 50], ["Budi", 20, "", "", 30], ["Citra", 55, 60, 45, 70], ["Dimas", "", 25, 30, 28], ["Eka", 35, 40, 38, 42], ["Fajar", 15, "", 20, 25], ["", ""], ["Class total", "", "", "", "", ""]],
-  { 0: 90, 5: 100, 6: 96 }, ["0", "8"]);
-const PARTY = sheet("class_party.xlsx", [["Item", "Price", "Qty", "Cost"], ["Snacks", 15000, 4, "B2*C2"], ["Drinks", 8000, 6, "=B3xC3"], ["Plates", 2000, 10, "20000"], ["Balloons", 1500, 12, "=B5*C4"], ["Total", "", "", "=SUM(D2:D4)"]], { 0: 100 }, ["0", "5"]);
+// ---------------------------------------------------------------- data
+const SHOP = () => sheet("shopping_list.xlsx", [["Item", "Price", "Qty", "Total"], ["Pencil", 3000, 4, ""], ["Notebook", 8000, 3, ""], ["Eraser", 2000, 5, ""], ["Ruler", 5000, 2, ""], ["Grand total", "", "", ""]], { 0: 100 }, ["0", "5"], rows("D", 2, 6));
+const POCKET = () => sheet("pocket_money.xlsx", [["Day", "Pocket money"], ["Monday", 5000], ["Tuesday", 8000], ["Wednesday", ""], ["Thursday", 6000], ["Friday", 10000], ["Saturday", 4000], ["Sunday", 9000], ["", ""], ["Total", ""], ["Average", ""], ["Most in one day", ""], ["Least in one day", ""], ["Days I got money", ""]],
+  { 0: 130, 1: 110 }, ["0", "9", "10", "11", "12", "13"], rows("B", 10, 14));
+const SNACK = () => sheet("snack_shop.xlsx", [["Snack", "Cost price", "Selling price", "Profit"], ["Chips", 4000, 6000, ""], ["Juice", 3000, 5000, ""], ["Cookies", 5000, 8000, ""], ["Candy", 1000, 2000, ""], ["Bread", 6000, 9000, ""], ["Total profit", "", "", ""]], { 0: 100, 1: 90, 2: 100 }, ["0", "6"], rows("D", 2, 7));
+const SCORES = () => sheet("test_scores.xlsx", [["Name", "Score"], ["Ayu", 78], ["Budi", 65], ["Citra", 92], ["Dimas", 58], ["Eka", 85], ["Fajar", 70], ["Gita", 88], ["Hana", 64], ["", ""], ["Average", ""], ["Highest", ""], ["Lowest", ""]], { 0: 100 }, ["0", "10", "11", "12"], rows("B", 11, 13));
+const JUMP = () => sheet("jump_rope.xlsx", [["Name", "Try 1", "Try 2", "Try 3", "Best jumps", "Tries done"], ["Ayu", 45, 52, 48, "=MAX(B2:D2)", ""], ["Budi", 30, "", 41, "", ""], ["Citra", 60, 58, 65, "", ""], ["Dimas", "", 35, "", "", ""], ["Eka", 50, 47, "", "", ""], ["Fajar", 38, 44, 40, "", ""], ["", ""], ["Class record", "", "", "", "", ""]],
+  { 0: 110, 4: 96, 5: 90 }, ["0", "8"], [...rows("E", 3, 7), ...rows("F", 2, 7), "E9"]);
+const SPELL = () => sheet("spelling_test.xlsx", [["Name", "Score"], ["Ayu", 18], ["Budi", 15], ["Citra", 20], ["Dimas", 12], ["Eka", 17], ["Fajar", 14], ["", ""], ["Total", "SUM(B2:B7)"], ["Average", "=AVERAGE(B2:B5)"], ["Highest", "=MAXX(B2:B7)"], ["Lowest", "12"], ["Number of students", "=COUNT(A2:A7)"]],
+  { 0: 150 }, ["0", "8", "9", "10", "11", "12"], rows("B", 9, 13));
 const STAR = { name: "Star", kind: "star", x: 100, y: 80, r: 24, color: "#F1C40F" };
+const APPLE = { name: "Apple", kind: "circle", x: 140, y: 0, r: 20, color: "#E74C3C" };
 const STONES = [-120, -60, 0, 60, 120, 180].map((x, i) => ({ name: "Stone " + (i + 1), kind: "circle", x, y: -70, r: 15, color: "#95A5A6" }));
 const LAVA = { name: "Lava", kind: "rect", x: 0, y: 0, w: 100, h: 360, color: "#E74C3C", label: "LAVA" };
-const PALETTE_BASIC = ["flag", "keyhat", "move", "turnR", "turnL", "point", "chx", "chy", "sayfor", "say", "wait", "repeat", "forever", "if", "ifelse", "touching", "touchc", "keyp"];
+const SCORE_SUM = (s) => rows("B", 2, 7).reduce((a, r) => a + N(s, r), 0);
+const touchesAt = (f, pr) => Math.hypot(f.x - pr.x, f.y - pr.y) < 26 * (f.size || 100) / 100 + pr.r;
 
 const LEVELS = [
-  // ---------------------------------------------------------------- learning time (teacher-led)
-  { title: "My first formula", tag: "Excel", mode: "📖 Learn with your teacher", teach: true, start: () => sheet(SHOP.file, SHOP.cells, SHOP.colW, SHOP.heads),
-    intro: "Work out the <b>Total</b> for each item, then the <b>Grand total</b>.<br>① Click <b>D2</b> and type <code>=B2*C2</code>, then press Enter. (Every formula starts with <b>=</b>. In Excel, × is <b>*</b>.)<br>② Drag the little green square (the <b>fill handle</b>) down to <b>D5</b>.<br>③ Click <b>D6</b> and use <b>Σ AutoSum</b> (or type <code>=SUM(D2:D5)</code>).",
+  // ================================================================ learning time (teacher-led)
+  { title: "My first formula", tag: "Excel", mode: "📖 Learn with your teacher", teach: true, start: SHOP,
+    intro: "Work out the <b>Total</b> for each item, then the <b>Grand total</b>. Fill in the <b style='background:#fff2cc;color:#000;padding:0 4px'>yellow</b> cells.<br>① Click <b>D2</b>, type <code>=B2*C2</code> and press Enter. (Every formula starts with <b>=</b>. In Excel, × is <b>*</b>.)<br>② Click D2 again and drag the little green square in its corner (the <b>fill handle</b>) down to <b>D5</b>.<br>③ Click <b>D6</b> and type <code>=SUM(D2:D5)</code>.",
     checks: [
-      ["D2 has a formula: Price × Qty = 12000", robust((s) => XS.isFormula(s, "D2") && near(XS.v(s, "D2"), +XS.raw(s, "B2") * +XS.raw(s, "C2")), [["B2", 3500]])],
-      ["D3, D4 and D5 are filled down", robust((s) => rows("D", 3, 5).every((r, k) => XS.isFormula(s, r) && near(XS.v(s, r), +XS.raw(s, "B" + (k + 3)) * +XS.raw(s, "C" + (k + 3)))), [["C4", 7]])],
-      ["D6 adds up all the totals with SUM", robust((s) => XS.uses(s, "D6", "SUM") && near(XS.v(s, "D6"), [2, 3, 4, 5].reduce((a, r) => a + +XS.raw(s, "B" + r) * +XS.raw(s, "C" + r), 0)), [["B5", 6000]])],
+      ["D2 has a formula: Price × Qty", robust((s) => XS.isFormula(s, "D2") && near(XS.v(s, "D2"), N(s, "B2") * N(s, "C2")), [["B2", 3500]])],
+      ["D3, D4 and D5 are filled down", robust((s) => [3, 4, 5].every((r) => XS.isFormula(s, "D" + r) && near(XS.v(s, "D" + r), N(s, "B" + r) * N(s, "C" + r))), [["C4", 7]])],
+      ["D6 adds up all the totals with SUM", robust((s) => XS.uses(s, "D6", "SUM") && near(XS.v(s, "D6"), [2, 3, 4, 5].reduce((a, r) => a + N(s, "B" + r) * N(s, "C" + r), 0)), [["B5", 6000]])],
     ],
-    hints: ["Click D2, type =B2*C2 and press Enter. Then click D2 again and drag the small square in its corner down to D5.", "Click D6, then Home → Σ AutoSum → press Enter. It should show =SUM(D2:D5)."] },
-  { title: "Hello, Robo!", tag: "Scratch", mode: "📖 Learn with your teacher", teach: true,
-    start: () => sc("hello_robo.sb3", { sprite: ROBO(-100, 0), props: [] }, [], ["flag", "keyhat", "move", "turnR", "turnL", "sayfor", "say", "wait"]),
-    intro: "Make Robo walk and talk. Drag blocks from the left and snap them together:<br><b>when 🚩 clicked</b> → <b>move 100 steps</b> → <b>say Hello! for 2 seconds</b>.<br>Then click the green flag 🚩 above the stage to run it.",
+    hints: ["Click D2, type =B2*C2 and press Enter. Then click D2 again and drag the small square in its corner down to D5.", "Click D6 and type =SUM(D2:D5), then press Enter."] },
+  { title: "Excel functions", tag: "Excel", mode: "📖 Learn with your teacher", teach: true, start: POCKET,
+    intro: "This is one week of pocket money. Use a <b>function</b> in each yellow cell. A function looks like <code>=NAME(B2:B8)</code>: B2:B8 means every cell from B2 down to B8.<br>• <b>Total</b> → <code>SUM</code> &nbsp;• <b>Average</b> → <code>AVERAGE</code><br>• <b>Most</b> → <code>MAX</code> &nbsp;• <b>Least</b> → <code>MIN</code><br>• <b>Days I got money</b> → <code>COUNT</code> (counts the cells that have a number)",
     checks: [
-      ["It starts when the green flag is clicked", (s) => (s.scripts || []).some((x) => x.list[0] && x.list[0].op === "flag" && x.list.length > 1)],
-      ["Robo moves 100 steps to the right", (s) => { const e = sSim(s, { secs: 4 }).end; return Math.abs(e.x - 0) < 1 && Math.abs(e.y) < 1; }],
-      ["Robo says something", (s) => sSim(s, { secs: 4 }).said.some((t) => t.trim())],
+      ["B10: the total with SUM", robust((s) => XS.uses(s, "B10", "SUM") && near(XS.v(s, "B10"), rows("B", 2, 8).reduce((a, r) => a + (N(s, r) || 0), 0)), [["B2", 6000]])],
+      ["B11: the average with AVERAGE", robust((s) => XS.uses(s, "B11", "AVERAGE") && near(XS.v(s, "B11"), (() => { const v = rows("B", 2, 8).map((r) => N(s, r)).filter((x) => x != null); return v.reduce((a, b) => a + b, 0) / v.length; })()), [["B8", 12000]])],
+      ["B12: the most with MAX", robust((s) => XS.uses(s, "B12", "MAX") && near(XS.v(s, "B12"), Math.max(...rows("B", 2, 8).map((r) => N(s, r)).filter((x) => x != null))), [["B3", 15000]])],
+      ["B13: the least with MIN", robust((s) => XS.uses(s, "B13", "MIN") && near(XS.v(s, "B13"), Math.min(...rows("B", 2, 8).map((r) => N(s, r)).filter((x) => x != null))), [["B7", 2000]])],
+      ["B14: the days with money, with COUNT", robust((s) => XS.uses(s, "B14", "COUNT") && near(XS.v(s, "B14"), rows("B", 2, 8).filter((r) => N(s, r) != null).length), [["B4", 3000]])],
     ],
-    hints: ["Events (yellow) has 'when 🚩 clicked'. Drag it into the middle. Then drag 'move 10 steps' from Motion and drop it just under, so it clicks on.", "Click the 10 and change it to 100. Add 'say Hello! for 2 seconds' from Looks underneath. Click 🚩 to test."] },
-  { title: "Hello, Python!", tag: "Python", mode: "📖 Learn with your teacher", teach: true,
-    start: () => py(['print("Hello, World!")', 'name = "___"', 'print("My name is " + name)']),
-    intro: "Press <b>▶ Run</b> to see what the program prints. Then:<br>① Change <code>___</code> to <b>your name</b> (keep the quotes!).<br>② Add <b>one more line</b> at the end that prints a message of your own, like <code>print(\"I like football\")</code>.",
-    checks: [
-      ["It prints Hello, World!", (s) => PYC.prints(s, [], ["Hello, World!"])],
-      ["The variable name holds your name", async (s) => { const l = await PYC.lines(s, []); return !!l && l.some((x) => /^My name is \S/.test(x) && !x.includes("___")); }],
-      ["It prints a third line of your own", async (s) => { const l = await PYC.lines(s, []); return !!l && l.length >= 3; }],
+    hints: ["Click B10 and type =SUM(B2:B8). The others work the same way: =AVERAGE(B2:B8), =MAX(B2:B8), =MIN(B2:B8), =COUNT(B2:B8).", "Wednesday is empty, so COUNT gives 6, not 7. AVERAGE also skips the empty day."] },
+  { title: "Hello, Robo!", tag: "Scratch", mode: "📖 Learn with your teacher", teach: true, start: () => sc("hello_robo.sb3", { sprite: ROBO(-100, 0), props: [] }, []),
+    intro: "Make Robo walk and talk. Drag blocks from the left and snap them together:<br><b>when 🚩 clicked</b> → <b>move 100 steps</b> → <b>say Hello! for 2 seconds</b>.<br>Then click the green flag 🚩 above the stage to test it. (Robo stays where it stops, just like in Scratch. Drag Robo back if it walks off!)",
+    checks: [FLAG,
+      SX("Robo moves", (s) => { const r = sSim(s, { secs: 4 }); return r.frames.some((f) => Math.hypot(f.x - r.frames[0].x, f.y - r.frames[0].y) > 40) || Math.hypot(r.end.x - s.stage.sprite.x, r.end.y - s.stage.sprite.y) > 40; }),
+      SX("Robo says something", (s) => sSim(s, { secs: 4 }).said.some((t) => t.trim()))],
+    hints: ["Events (yellow) has 'when 🚩 clicked'. Drag it into the middle. Then drag 'move 10 steps' from Motion and drop it just under, so it clicks on.", "Click the 10 and change it to 100. Add 'say Hello! for 2 seconds' from Looks underneath. Then click 🚩."] },
+  { title: "Square dance", tag: "Scratch", mode: "📖 Learn with your teacher", teach: true, start: () => sc("square_dance.sb3", { sprite: ROBO(-50, -50), props: [] }, [script(20, 20, B("flag"), B("goto", "-50", "-50"), B("point", "90"))]),
+    intro: "Robo wants to dance in a <b>square</b>: move 100 steps, turn ↻ 90 degrees, wait 0.5 seconds… four times. Instead of copying the blocks 4 times, put them inside a <b>repeat 4</b> loop (Control). Then click 🚩.",
+    checks: [FLAG,
+      SX("It uses a repeat loop", (s) => sUses(s, "repeat") && sCount(s, "move") <= 2),
+      SX("Robo dances a square and comes back to the start", (s) => { const r = sSim(s, { secs: 6 }); const far = r.frames.some((f) => Math.hypot(f.x + 50, f.y + 50) > 80); return far && Math.hypot(r.end.x + 50, r.end.y + 50) < 6; })],
+    hints: ["Drag 'repeat 10' under 'point in direction 90'. Put 'move', 'turn ↻' and 'wait' INSIDE its mouth.", "Change repeat to 4, move to 100, turn to 90 and wait to 0.5."] },
+  { title: "Catch the apple", tag: "Scratch", mode: "📖 Learn with your teacher", teach: true, start: () => sc("catch_apple.sb3", { sprite: ROBO(-150, 0), props: [APPLE] }, [script(20, 20, B("flag"), B("goto", "-150", "0"))]),
+    intro: "Steer Robo to the 🍎 with the arrow keys:<br>① <b>when right arrow key pressed</b> → <b>change x by 10</b>, and the same for the <b>left arrow</b> (change x by −10).<br>② Under the green-flag script add <b>forever</b> → <b>if touching Apple? then</b> → <b>say Yum!</b><br>Click 🚩, click the stage, then drive Robo to the apple.",
+    checks: [FLAG,
+      SX("→ moves Robo right", (s) => near(Math.round(sSim(s, { secs: 2, events: rightPresses(3) }).end.x), -120)),
+      SX("← moves Robo left", (s) => near(Math.round(sSim(s, { secs: 2, events: [{ t: .3, key: "left arrow" }, { t: .5, key: "left arrow" }] }).end.x), -170)),
+      SX("Robo says Yum! when it touches the apple", (s) => { const r = sSim(s, { secs: 6, events: rightPresses(30, .3, .1) }); return r.frames.some((f) => touchesAt(f, APPLE) && /^yum!*$/i.test(String(f.say || "").trim())); }),
+      ["You drove Robo with the arrow keys", (s) => sRan(s) && keysTried(s).some((k) => k.includes("arrow"))]],
+    hints: ["Events has 'when space key pressed': drag it out and choose 'right arrow'. Add 'change x by 10' under it. Do the same for 'left arrow' with -10.", "Snap 'forever' under 'go to x: -150 y: 0'. Put 'if ⬡ then' inside it, drop 'touching ?' (Sensing) into the hexagon and choose Apple, then add 'say Yum!' inside the if."] },
+  { title: "Hello, World!", tag: "Python", mode: "📖 Learn with your teacher", teach: true, start: () => py(["# Write your first line of Python under this one"]),
+    intro: "Every programmer's first program! Type this and press <b>▶ Run</b>:<br><code>print(\"Hello, World!\")</code><br><b>print</b> shows something on the screen. The text goes inside <b>quotes</b> \" \" and the quotes go inside <b>brackets</b> ( ).",
+    checks: [RUN, ["It prints Hello, World!", async (s) => { const l = await PYC.lines(s, []); return !!l && l.some((x) => HELLO.test(x)); }]],
+    hints: ["Type exactly: print(\"Hello, World!\")", "Check the quotes \" \" and the brackets ( ). print must be in small letters."] },
+  { title: "Words and numbers", tag: "Python", mode: "📖 Learn with your teacher", teach: true, start: () => py(['print("Hello, World!")', 'print("10 + 5")', "print(10 + 5)"]),
+    intro: "Press <b>▶ Run</b> and look at lines 2 and 3. With quotes, Python prints the text exactly. Without quotes, Python does the maths!<br>Now add two lines:<br>① print <b>your name</b> (text, so use quotes)<br>② let Python work out <b>25 + 17</b> (no quotes, and don't type the answer yourself)",
+    checks: [RUN, 
+      ["It prints your name", async (s) => { const l = await PYC.lines(s, []); return !!l && l.filter((x) => /[a-z]/i.test(x) && !HELLO.test(x) && x !== "10 + 5").length >= 1; }],
+      ["Python works out 25 + 17", async (s) => (await PYC.prints(s, [], ["42"])) && /25\s*\+\s*17|17\s*\+\s*25/.test(s.code) && !/\b42\b/.test(s.code)],
     ],
-    hints: ["Text always goes inside quotes: name = \"Sari\"", 'Add a new line at the bottom, for example:\nprint("I like football")'] },
-  // ---------------------------------------------------------------- race: Excel
-  { title: "Snack shop profit", tag: "Excel", mode: "Formulas + fill handle", start: () => sheet(SNACK.file, SNACK.cells, SNACK.colW, SNACK.heads),
+    hints: ['Text needs quotes: print("Sari")', "Maths has no quotes: print(25 + 17)"] },
+  { title: "Variables", tag: "Python", mode: "📖 Learn with your teacher", teach: true, start: () => py(['name = "___"', 'print("Hello, " + name + "!")']),
+    intro: "A <b>variable</b> is a box with a name that keeps something for later.<br>① Change <code>___</code> to <b>your name</b> (keep the quotes) and press ▶ Run.<br>② Make a new variable <code>hobby</code> with your favourite hobby, and print <b>I like</b> + your hobby, like <code>print(\"I like \" + hobby)</code>.",
+    checks: [RUN, 
+      ["It says Hello to your name", async (s) => { const l = await PYC.lines(s, []); return !!l && l.some((x) => /^Hello, \S.*!$/.test(x) && !x.includes("___")); }],
+      ["It has a hobby variable", (s) => /^\s*hobby\s*=\s*["'].+["']/m.test(s.code)],
+      ["It prints I like … using the variable", async (s) => { const l = await PYC.lines(s, []); if (!l || !l.some((x) => /^I like \S/.test(x))) return false; const l2 = await PYC.lines({ ...s, code: s.code.replace(/^(\s*hobby\s*=\s*)["'].*["']/m, '$1"zzz"') }, []); return !!l2 && l2.some((x) => x.includes("zzz")); }],
+    ],
+    hints: ['name = "Sari"   (text always goes in quotes)', 'hobby = "football"\nprint("I like " + hobby)'] },
+  // ================================================================ race: Excel
+  { title: "Snack shop profit", tag: "Excel", mode: "Formulas + fill handle", start: SNACK,
     intro: "Profit = <b>Selling price − Cost price</b>. Put a formula in <b>D2</b>, fill it down to <b>D6</b>, then work out the <b>Total profit</b> in <b>D7</b>.",
     checks: [
-      ["D2 = Selling price − Cost price (2000)", robust((s) => XS.isFormula(s, "D2") && near(XS.v(s, "D2"), +XS.raw(s, "C2") - +XS.raw(s, "B2")), [["C2", 6500]])],
-      ["D3 to D6 are filled down", robust((s) => rows("D", 3, 6).every((r, k) => XS.isFormula(s, r) && near(XS.v(s, r), +XS.raw(s, "C" + (k + 3)) - +XS.raw(s, "B" + (k + 3)))), [["B6", 5000]])],
-      ["D7 is the total profit (use SUM)", robust((s) => XS.uses(s, "D7", "SUM") && near(XS.v(s, "D7"), [2, 3, 4, 5, 6].reduce((a, r) => a + +XS.raw(s, "C" + r) - +XS.raw(s, "B" + r), 0)), [["C3", 5500]])],
+      ["D2 = Selling price − Cost price", robust((s) => XS.isFormula(s, "D2") && near(XS.v(s, "D2"), N(s, "C2") - N(s, "B2")), [["C2", 6500]])],
+      ["D3 to D6 are filled down", robust((s) => [3, 4, 5, 6].every((r) => XS.isFormula(s, "D" + r) && near(XS.v(s, "D" + r), N(s, "C" + r) - N(s, "B" + r))), [["B6", 5000]])],
+      ["D7 is the total profit (use SUM)", robust((s) => XS.uses(s, "D7", "SUM") && near(XS.v(s, "D7"), [2, 3, 4, 5, 6].reduce((a, r) => a + N(s, "C" + r) - N(s, "B" + r), 0)), [["C3", 5500]])],
     ],
     hints: ["Selling price is in column C and Cost price in column B, so D2 is =C2-B2. (=B2-C2 gives a negative profit!)", "Drag the fill handle from D2 to D6. Then in D7: =SUM(D2:D6)."] },
-  { title: "Test scores", tag: "Excel", mode: "AVERAGE · MAX · MIN", start: () => sheet(SCORES.file, SCORES.cells, SCORES.colW, SCORES.heads),
+  { title: "Test scores", tag: "Excel", mode: "AVERAGE · MAX · MIN", start: SCORES,
     intro: "Use functions to find the class <b>average</b> (B11), the <b>highest</b> score (B12) and the <b>lowest</b> score (B13). Include all 8 students!",
     checks: [
-      ["B11 shows the average with AVERAGE", robust((s) => XS.uses(s, "B11", "AVERAGE") && near(XS.v(s, "B11"), rows("B", 2, 9).reduce((a, r) => a + +XS.raw(s, r), 0) / 8), [["B9", 100]])],
-      ["B12 shows the highest score with MAX", robust((s) => XS.uses(s, "B12", "MAX") && near(XS.v(s, "B12"), Math.max(...rows("B", 2, 9).map((r) => +XS.raw(s, r)))), [["B9", 99]])],
-      ["B13 shows the lowest score with MIN", robust((s) => XS.uses(s, "B13", "MIN") && near(XS.v(s, "B13"), Math.min(...rows("B", 2, 9).map((r) => +XS.raw(s, r)))), [["B2", 40]])],
+      ["B11 shows the average with AVERAGE", robust((s) => XS.uses(s, "B11", "AVERAGE") && near(XS.v(s, "B11"), rows("B", 2, 9).reduce((a, r) => a + N(s, r), 0) / 8), [["B9", 100]])],
+      ["B12 shows the highest score with MAX", robust((s) => XS.uses(s, "B12", "MAX") && near(XS.v(s, "B12"), Math.max(...rows("B", 2, 9).map((r) => N(s, r)))), [["B9", 99]])],
+      ["B13 shows the lowest score with MIN", robust((s) => XS.uses(s, "B13", "MIN") && near(XS.v(s, "B13"), Math.min(...rows("B", 2, 9).map((r) => N(s, r)))), [["B2", 40]])],
     ],
-    hints: ["=AVERAGE(B2:B9) means: the average of every cell from B2 down to B9.", "Σ AutoSum ▾ has Average, Max and Min. Check the range it picks: it must be B2:B9 (all 8 students)."] },
-  { title: "Reading log", tag: "Excel", mode: "SUM · COUNT · fill handle", start: () => sheet(READ.file, READ.cells, READ.colW, READ.heads),
-    intro: "For each student, find the <b>Total pages</b> (column F) and how many <b>Weeks read</b> (column G: count the weeks with a number). Fill both down to row 7. Then put the <b>Class total</b> of pages in <b>F9</b>.",
+    hints: ["=AVERAGE(B2:B9) means: the average of every cell from B2 down to B9.", "=MAX(B2:B9) and =MIN(B2:B9). Check the range: it must be B2:B9 (all 8 students)."] },
+  { title: "Jump rope contest", tag: "Excel", mode: "MAX · COUNT · fill handle", start: JUMP,
+    intro: "Each child had up to <b>3 tries</b> at skipping. An empty cell means they missed that try.<br>• <b>Best jumps</b> = the biggest number in their row. E2 is done for you: click it and look at the formula bar! Fill it down to E7.<br>• <b>Tries done</b> = how many tries have a number → use <code>COUNT</code>, like <code>=COUNT(B2:D2)</code>. Fill it down too.<br>• <b>Class record</b> (E9) = the best of all the Best jumps.",
     checks: [
-      ["F2 to F7: total pages for each student", robust((s) => rows("F", 2, 7).every((r, k) => XS.uses(s, r, "SUM") && near(XS.v(s, r), ["B", "C", "D", "E"].reduce((a, c) => a + (+XS.raw(s, c + (k + 2)) || 0), 0))), [["C3", 18]])],
-      ["G2 to G7: number of weeks read (COUNT)", robust((s) => rows("G", 2, 7).every((r, k) => XS.uses(s, r, "COUNT") && near(XS.v(s, r), ["B", "C", "D", "E"].filter((c) => XS.raw(s, c + (k + 2)) !== "").length)), [["D3", 12]])],
-      ["F9 is the class total of pages", robust((s) => XS.isFormula(s, "F9") && near(XS.v(s, "F9"), rows("F", 2, 7).reduce((a, r) => a + (XS.v(s, r) || 0), 0)) && XS.v(s, "F9") > 0, [["E7", 33]])],
+      ["E3 to E7: each child's best jumps", robust((s) => rows("E", 2, 7).every((r, k) => XS.uses(s, r, "MAX") && near(XS.v(s, r), Math.max(...["B", "C", "D"].map((c) => N(s, c + (k + 2))).filter((x) => x != null)))), [["C3", 70]])],
+      ["F2 to F7: how many tries each child did", robust((s) => rows("F", 2, 7).every((r, k) => XS.uses(s, r, "COUNT") && near(XS.v(s, r), ["B", "C", "D"].filter((c) => N(s, c + (k + 2)) != null).length)), [["D5", 33]])],
+      ["E9: the class record", robust((s) => XS.isFormula(s, "E9") && near(XS.v(s, "E9"), Math.max(...rows("E", 2, 7).map((r) => XS.v(s, r)).filter((x) => typeof x === "number"))), [["B3", 90]])],
     ],
-    hints: ["F2: =SUM(B2:E2). G2: =COUNT(B2:E2). COUNT counts only the cells that have numbers, so empty weeks don't count.", "Select F2 and G2 together and double-click the fill handle (or drag it down to row 7). F9: =SUM(F2:F7)."] },
-  { title: "Fix the party sheet", tag: "Excel", mode: "Find and fix 5 mistakes", start: () => sheet(PARTY.file, PARTY.cells, PARTY.colW, PARTY.heads),
-    intro: "The <b>Cost</b> column (Price × Qty) and the <b>Total</b> have <b>5 mistakes</b>. Click each cell in column D and look at the formula bar. Fix them all so the sheet still works if a price changes.",
+    hints: ["Click E2, then drag its fill handle down to E7. In F2 type =COUNT(B2:D2) and fill it down to F7.", "In E9 type =MAX(E2:E7)."] },
+  { title: "Fix the spelling sheet", tag: "Excel", mode: "Find and fix 5 mistakes", start: SPELL,
+    intro: "Each yellow cell in B9 to B13 has a <b>different mistake</b>. Click each one and read the <b>formula bar</b>. Fix all 5 so the sheet still works if a score changes.",
     checks: [
-      ["D2 is a real formula", robust((s) => XS.isFormula(s, "D2") && near(XS.v(s, "D2"), +XS.raw(s, "B2") * +XS.raw(s, "C2")), [["B2", 16000]])],
-      ["D3 works (no #NAME? error)", robust((s) => XS.isFormula(s, "D3") && near(XS.v(s, "D3"), +XS.raw(s, "B3") * +XS.raw(s, "C3")), [["C3", 7]])],
-      ["D4 still works when the price changes", robust((s) => XS.isFormula(s, "D4") && near(XS.v(s, "D4"), +XS.raw(s, "B4") * +XS.raw(s, "C4")), [["B4", 2500]])],
-      ["D5 uses the right row", robust((s) => XS.isFormula(s, "D5") && near(XS.v(s, "D5"), +XS.raw(s, "B5") * +XS.raw(s, "C5")), [["C5", 15]])],
-      ["D6 adds up ALL the costs", robust((s) => XS.uses(s, "D6", "SUM") && near(XS.v(s, "D6"), [2, 3, 4, 5].reduce((a, r) => a + +XS.raw(s, "B" + r) * +XS.raw(s, "C" + r), 0)), [["B5", 2000]])],
+      ["Total works (B9)", robust((s) => XS.uses(s, "B9", "SUM") && XS.isFormula(s, "B9") && near(XS.v(s, "B9"), SCORE_SUM(s)), [["B3", 19]])],
+      ["Average uses ALL the students (B10)", robust((s) => XS.isFormula(s, "B10") && near(XS.v(s, "B10"), SCORE_SUM(s) / 6), [["B7", 20]])],
+      ["Highest has no error (B11)", robust((s) => XS.isFormula(s, "B11") && near(XS.v(s, "B11"), Math.max(...rows("B", 2, 7).map((r) => N(s, r)))), [["B6", 25]])],
+      ["Lowest still works when a score changes (B12)", robust((s) => XS.isFormula(s, "B12") && near(XS.v(s, "B12"), Math.min(...rows("B", 2, 7).map((r) => N(s, r)))), [["B5", 16]])],
+      ["Number of students is 6 (B13)", robust((s) => XS.uses(s, "B13", "COUNT") && near(XS.v(s, "B13"), 6), [["B4", 19]])],
     ],
-    hints: ["Look for: a formula with no =, an x instead of *, a number typed in by hand, a wrong cell, and a SUM that stops too early.", "Easiest fix: type =B2*C2 in D2, fill it down to D5, then make D6 =SUM(D2:D5)."] },
-  // ---------------------------------------------------------------- race: Scratch
-  { title: "Walk to the star", tag: "Scratch", mode: "Move and turn", start: () => sc("star_walk.sb3", { sprite: ROBO(-150, -100), props: [STAR] }, [script(30, 30, B("flag"))], ["flag", "move", "turnR", "turnL", "point", "sayfor", "say", "wait"]),
-    intro: "Get Robo to the ⭐ using only <b>move</b> and <b>turn</b> blocks. Robo starts at x: −150, y: −100 facing right. The star is at x: 100, y: 80. When Robo gets there, make it say <b>I made it!</b>",
-    checks: [
-      ["Robo ends on the star", (s) => sNear(sSim(s, { secs: 6 }).end, 100, 80, 25)],
-      ["It uses a turn block", (s) => sUses(s, "turnL") || sUses(s, "turnR") || sUses(s, "point")],
-      ["Robo says I made it!", (s) => sSim(s, { secs: 6 }).said.some((t) => t.trim().toLowerCase().replace(/[.!]+$/, "") === "i made it")],
-    ],
-    hints: ["Robo needs to go right 250 steps (from −150 to 100), then up 180 steps (from −100 to 80).", "move 250 steps → turn ↺ 90 degrees → move 180 steps → say I made it! for 2 seconds."] },
-  { title: "Hop the stones", tag: "Scratch", mode: "Repeat loop", start: () => sc("stepping_stones.sb3", { sprite: ROBO(-180, -70), props: STONES, bg: "#d6eaf8" }, [script(30, 30, B("flag"), B("move", "60"), B("wait", "0.5"))]),
+    hints: ["Mistakes to look for: a formula with no =, a range that stops too early, a spelling mistake in a function name, a number typed in by hand, and COUNT on the names.", "COUNT only counts cells with NUMBERS, so =COUNT(A2:A7) counts the names and gives 0. Use the score column instead."] },
+  // ================================================================ race: Scratch
+  { title: "Walk to the star", tag: "Scratch", mode: "Move and turn", start: () => sc("star_walk.sb3", { sprite: ROBO(-150, -100), props: [STAR] }, [script(20, 20, B("flag"), B("goto", "-150", "-100"), B("point", "90"))]),
+    intro: "Get Robo to touch the ⭐ using <b>move</b> and <b>turn</b> blocks. Try some numbers, click 🚩, and change them until Robo reaches the star.",
+    checks: [FLAG,
+      SX("Robo touches the star", (s) => sSim(s, { secs: 8 }).frames.some((f) => touchesAt(f, STAR))),
+      SX("It uses a turn block", (s) => sUses(s, "turnL") || sUses(s, "turnR"))],
+    hints: ["Robo needs to go right, then turn and go up. Add 'move 10 steps' and change the number, then try 'turn ↺ 90 degrees'.", "Something like: move 250 steps → turn ↺ 90 degrees → move 180 steps."] },
+  { title: "Hop the stones", tag: "Scratch", mode: "Repeat loop", start: () => sc("stepping_stones.sb3", { sprite: ROBO(-180, -70), props: STONES, bg: "#d6eaf8" }, [script(20, 20, B("flag"), B("goto", "-180", "-70"), B("move", "60"), B("wait", "0.5"))]),
     intro: "Robo must hop onto all <b>6 stones</b>: move 60 steps, wait 0.5 seconds, again and again. Use a <b>repeat</b> loop instead of copying the blocks 6 times.",
-    checks: [
-      ["Robo stops on every stone", (s) => { const f = sSim(s, { secs: 6 }).frames; return STONES.every((st) => f.filter((x) => sNear(x, st.x, st.y, 4)).length >= 8); }],
-      ["Robo ends on the last stone", (s) => sNear(sSim(s, { secs: 6 }).end, 180, -70, 4)],
-      ["It uses repeat (only one move block)", (s) => sUses(s, "repeat") && sCount(s, "move") === 1],
-    ],
-    hints: ["Control has 'repeat 10'. Drag it under 'when 🚩 clicked' and put the move and wait blocks INSIDE its mouth.", "Change the 10 in repeat to 6."] },
-  { title: "Arrow keys", tag: "Scratch", mode: "Key events", start: () => sc("arrow_keys.sb3", { sprite: ROBO(0, 0), props: [] }, [script(30, 30, B("keyhat", "right arrow"), B("chx", "10"))]),
+    checks: [FLAG,
+      SX("Robo stops on every stone", (s) => { const f = sSim(s, { secs: 6 }).frames; return STONES.every((st) => f.filter((x) => sNear(x, st.x, st.y, 4)).length >= 8); }),
+      SX("It uses repeat (only one move block)", (s) => sUses(s, "repeat") && sCount(s, "move") === 1)],
+    hints: ["Control has 'repeat 10'. Drag it under 'go to x: -180 y: -70' and put the move and wait blocks INSIDE its mouth.", "Change the 10 in repeat to 6."] },
+  { title: "Arrow keys", tag: "Scratch", mode: "Key events", start: () => sc("arrow_keys.sb3", { sprite: ROBO(0, 0), props: [] }, [script(20, 20, B("flag"), B("goto", "0", "0")), script(20, 130, B("keyhat", "right arrow"), B("chx", "10"))]),
     intro: "The <b>right arrow</b> already moves Robo right. Make the other arrows work too: <b>left</b> → change x by −10, <b>up</b> → change y by 10, <b>down</b> → change y by −10.<br>To test: click 🚩, click the stage, then press the arrow keys.",
-    checks: [
-      ["→ moves Robo right", (s) => { const e = sSim(s, { secs: 2, events: [0.2, 0.5, 0.8].map((t) => ({ t, key: "right arrow" })) }).end; return near(Math.round(e.x), 30) && near(Math.round(e.y), 0); }],
-      ["← moves Robo left", (s) => { const e = sSim(s, { secs: 2, events: [0.2, 0.5].map((t) => ({ t, key: "left arrow" })) }).end; return near(Math.round(e.x), -20) && near(Math.round(e.y), 0); }],
-      ["↑ and ↓ move Robo up and down", (s) => { const e = sSim(s, { secs: 2, events: [{ t: .2, key: "up arrow" }, { t: .5, key: "up arrow" }, { t: .8, key: "up arrow" }, { t: 1.1, key: "down arrow" }] }).end; return near(Math.round(e.y), 20) && near(Math.round(e.x), 0); }],
-    ],
-    hints: ["Right-click the yellow hat and choose Duplicate, then change 'right arrow' to 'left arrow' and 10 to -10.", "You need 4 scripts in total: right (x 10), left (x -10), up (y 10), down (y -10)."] },
-  { title: "Fix the patrol", tag: "Scratch", mode: "Forever + if", start: () => sc("patrol.sb3", { sprite: ROBO(0, 0), props: [] }, [script(20, 20, B("flag")), script(30, 120, B("forever", { s1: [B("move", "5")] })), script(20, 260, B("if", { b: B("touching", "edge"), s1: [B("turnR", "180")] }))]),
-    intro: "Robo should walk to the edge, turn around, and keep walking back and forth <b>forever</b>. All the blocks are here, but they are not snapped together! Put <b>forever</b> under the green flag, and the <b>if touching edge</b> block inside forever, under move.",
-    checks: [
-      ["Robo reaches the right edge", (s) => sSim(s, { secs: 8 }).frames.some((f) => f.x > 190)],
-      ["…then turns and reaches the left edge", (s) => { const f = sSim(s, { secs: 12 }).frames; const i = f.findIndex((x) => x.x > 190); return i >= 0 && f.slice(i).some((x) => x.x < -190); }],
-      ["It uses forever and if touching edge", (s) => sUses(s, "forever") && sUses(s, "if") && sLive(s).some((b) => b.op === "touching" && b.a[0] === "edge")],
-    ],
-    hints: ["Drag 'forever' (with move 5 inside) up until it clicks under 'when 🚩 clicked'.", "Drag the 'if' block into forever's mouth, just below 'move 5 steps'."] },
-  { title: "Lava!", tag: "Scratch", mode: "If–else + sensing", start: () => sc("lava.sb3", { sprite: ROBO(-200, 0), props: [LAVA], bg: "#fdf2e9" }, [script(30, 20, B("flag"), B("goto", "-200", "0"), B("repeat", "130", { s1: [B("chx", "3")] }))], [...PALETTE_BASIC, "goto"]),
-    intro: "Robo walks across the lava. Inside the repeat loop, add an <b>if–else</b>: if Robo is <b>touching the red colour</b>, say <b>Hot!</b>, else say <b>Safe</b>.",
-    checks: [
-      ["On the lava Robo says Hot!", (s) => { const f = sSim(s, { secs: 6 }).frames; const on = f.filter((x) => Math.abs(x.x) < 60); return on.length > 5 && on.every((x) => /^hot!?$/i.test(String(x.say || "").trim())); }],
-      ["Off the lava Robo says Safe", (s) => { const f = sSim(s, { secs: 6 }).frames.slice(2); const off = f.filter((x) => Math.abs(x.x) > 95); return off.length > 10 && off.every((x) => /^safe!?$/i.test(String(x.say || "").trim())); }],
-      ["It uses if–else", (s) => sUses(s, "ifelse")],
-    ],
-    hints: ["Control has 'if ⬡ then … else …'. Put it inside repeat, under 'change x by 3'. Then drop 'touching color' (Sensing) into the hexagon hole.", "Click the colour dot in 'touching color' until it is red. Put 'say Hot!' in the top part and 'say Safe' in the else part (use 'say', not 'say for 2 seconds')."] },
-  // ---------------------------------------------------------------- race: Python
+    checks: [FLAG,
+      SX("← moves Robo left", (s) => { const e = sSim(s, { secs: 2, events: [{ t: .3, key: "left arrow" }, { t: .5, key: "left arrow" }] }).end; return near(Math.round(e.x), -20) && near(Math.round(e.y), 0); }),
+      SX("↑ and ↓ move Robo up and down", (s) => { const e = sSim(s, { secs: 2, events: [{ t: .2, key: "up arrow" }, { t: .5, key: "up arrow" }, { t: .8, key: "up arrow" }, { t: 1.1, key: "down arrow" }] }).end; return near(Math.round(e.y), 20) && near(Math.round(e.x), 0); }),
+      ["You tested at least 3 different arrow keys", (s) => sRan(s) && keysTried(s).filter((k) => k.includes("arrow")).length >= 3]],
+    hints: ["Right-click the yellow 'when right arrow key pressed' block and choose Duplicate. Change it to 'left arrow' and 10 to -10.", "You need 4 key scripts: right (x 10), left (x -10), up (y 10), down (y -10)."] },
+  { title: "Fix the patrol", tag: "Scratch", mode: "Forever + if", start: () => sc("patrol.sb3", { sprite: ROBO(0, 0), props: [] }, [script(20, 20, B("flag"), B("goto", "0", "0"), B("point", "90")), script(30, 160, B("forever", { s1: [B("move", "5")] })), script(20, 300, B("if", { b: B("touching", "edge"), s1: [B("turnR", "180")] }))]),
+    intro: "Robo should walk to the edge, turn around, and keep walking back and forth <b>forever</b>. All the blocks are here, but they are not snapped together! Put <b>forever</b> under the green-flag script, and the <b>if touching edge</b> block inside forever, under move. Then click 🚩.",
+    checks: [FLAG,
+      SX("Robo turns at the right edge and reaches the left edge", (s) => { const f = sSim(s, { secs: 12 }).frames; const i = f.findIndex((x) => x.x > 190); return i >= 0 && f.slice(i).some((x) => x.x < -190); }),
+      SX("It uses forever and if touching edge", (s) => sUses(s, "forever") && sUses(s, "if") && sLive(s).some((b) => b.op === "touching" && b.a[0] === "edge"))],
+    hints: ["Drag 'forever' (with move 5 inside) up until it clicks under 'point in direction 90'.", "Drag the 'if' block into forever's mouth, just below 'move 5 steps'."] },
+  { title: "Lava!", tag: "Scratch", mode: "If–else + sensing", start: () => sc("lava.sb3", { sprite: ROBO(-200, 0), props: [LAVA], bg: "#fdf2e9" }, [script(20, 20, B("flag"), B("goto", "-200", "0"), B("repeat", "130", { s1: [B("chx", "3")] }))]),
+    intro: "Robo walks across the lava. Inside the repeat loop, add an <b>if–else</b>: if Robo is <b>touching the red colour</b>, say <b>Hot!</b>, else say <b>Safe</b>. Then click 🚩.",
+    checks: [FLAG,
+      SX("On the lava Robo says Hot!", (s) => { const f = sSim(s, { secs: 6 }).frames; const on = f.filter((x) => Math.abs(x.x) < 60); return on.length > 5 && on.every((x) => /^hot!*$/i.test(String(x.say || "").trim())); }),
+      SX("Off the lava Robo says Safe", (s) => { const f = sSim(s, { secs: 6 }).frames.slice(2); const off = f.filter((x) => Math.abs(x.x) > 95); return off.length > 10 && off.every((x) => /^safe!*$/i.test(String(x.say || "").trim())); }),
+      SX("It uses if–else", (s) => sUses(s, "ifelse"))],
+    hints: ["Control has 'if ⬡ then … else …'. Put it inside repeat, under 'change x by 3'. Then drop 'touching color' (Sensing) into the hexagon hole.", "Click the colour dot until it is red. Put 'say Hot!' in the top part and 'say Safe' in the else part (use 'say', not 'say for 2 seconds')."] },
+  // ================================================================ race: Python
   { title: "Python calculator", tag: "Python", mode: "Maths in Python", start: () => py(["# Let Python do the maths. Don't type the answers yourself!", "print(12 + 30)"]),
     intro: "Python can do maths like Excel. Add two more <code>print</code> lines that work out <b>7 × 8</b> and <b>100 ÷ 4</b>. (In Python, × is <code>*</code> and ÷ is <code>/</code>, the same as Excel!)",
-    checks: [
-      ["It prints 42", (s) => PYC.prints(s, [], ["42"])],
-      ["It prints 7 × 8 = 56", (s) => PYC.prints(s, [], ["56"])],
-      ["It prints 100 ÷ 4 = 25.0", async (s) => { const l = await PYC.lines(s, []); return !!l && l.some((x) => x === "25.0" || x === "25"); }],
+    checks: [RUN, 
+      ["It prints 7 × 8", (s) => PYC.prints(s, [], ["56"])],
+      ["It prints 100 ÷ 4", async (s) => { const l = await PYC.lines(s, []); return !!l && l.some((x) => x === "25.0" || x === "25"); }],
       ["Python did the maths (no typed answers)", (s) => /\*/.test(s.code) && /\//.test(s.code) && !/\b56\b/.test(s.code) && !/\b25(\.0)?\b/.test(s.code)],
     ],
     hints: ["Copy the print line and change the sum inside the brackets.", "print(7 * 8)\nprint(100 / 4)"] },
-  { title: "Variables", tag: "Python", mode: "Join text with +", start: () => py(['name = "Sari"', 'food = "nasi goreng"', "# print: Sari likes nasi goreng"]),
+  { title: "Sari likes…", tag: "Python", mode: "Variables + joining text", start: () => py(['name = "Sari"', 'food = "nasi goreng"', "# print: Sari likes nasi goreng"]),
     intro: "Print <b>Sari likes nasi goreng</b> using the two <b>variables</b>. Join the text with <code>+</code> and don't forget the spaces!",
-    checks: [
+    checks: [RUN, 
       ["It prints Sari likes nasi goreng", (s) => PYC.printsOnly(s, [], ["Sari likes nasi goreng"])],
       ["It uses the variables (change them and the output changes)", (s) => PYC.printsOnly(PYC.withCode(s, s.code.replace(/"Sari"/, '"Budi"').replace(/"nasi goreng"/, '"mie ayam"')), [], ["Budi likes mie ayam"])],
     ],
     hints: ["Variables have no quotes: name. Text has quotes: \" likes \" (with a space on each side).", 'print(name + " likes " + food)'] },
-  { title: "Ask a question", tag: "Python", mode: "input()", start: () => py(['name = input("What is your name? ")', "# 1. say hello, like: Hello, Anna!", "# 2. ask for their favourite food", "# 3. print, like: Anna likes pizza"], ["Anna", "pizza"]),
-    intro: "The program asks for a name. Make it say <b>Hello, Anna!</b>, then ask <b>What is your favourite food?</b> and print <b>Anna likes pizza</b>. Type test answers in the <b>Input</b> box, one per line.",
-    checks: [
-      ["Anna → Hello, Anna!", (s) => PYC.prints(s, ["Anna", "pizza"], ["Hello, Anna!"])],
-      ["It asks for a second answer (the food)", async (s) => { const r = await pyRun(s.code, ["Anna", "pizza"]); return !r.error && r.used === 2; }],
-      ["Budi + bakso → Budi likes bakso", (s) => PYC.prints(s, ["Budi", "bakso"], ["Hello, Budi!", "Budi likes bakso"])],
+  { title: "Ask a question", tag: "Python", mode: "input()", start: () => py(['name = input("What is your name? ")', "# 1. say Hello to the name that was typed", "# 2. ask: What is your favourite food?", "# 3. print the name + likes + the food"]),
+    intro: "<code>input()</code> asks a question and waits for an answer. Press ▶ Run and type your answer in the terminal.<br>Make the program say <b>Hello, …!</b> to the name, then ask <b>What is your favourite food?</b> and print <b>… likes …</b> with both answers. It must work for <b>any</b> name and food!",
+    checks: [RUN, 
+      ["It says Hello, … ! to any name", async (s) => (await PYC.prints(s, ["Budi", "bakso"], ["Hello, Budi!"])) && (await PYC.prints(s, ["Gita", "sate"], ["Hello, Gita!"]))],
+      ["It asks a second question (the food)", async (s) => { const r = await pyRun(s.code, ["Budi", "bakso"]); return !r.error && r.used === 2; }],
+      ["It prints … likes … with both answers", async (s) => (await PYC.prints(s, ["Budi", "bakso"], ["Budi likes bakso"])) && (await PYC.prints(s, ["Gita", "sate ayam"], ["Gita likes sate ayam"]))],
     ],
     hints: ['print("Hello, " + name + "!")\nfood = input("What is your favourite food? ")', 'print(name + " likes " + food)'] },
 ];
-// model answers (used by the tests and the teacher's answer key)
+// model answers (used by the tests)
+const pyOK = (s) => { s.ran = { code: s.code, ok: true }; return s; };
+const runOK = (s, keys = []) => { s.run = { sig: sSig(s), start: { ...s.stage.sprite }, keys, done: true }; return s; };
 const SOLVE = [
   (s) => XS.setMany(s, [["D2", "=B2*C2"], ["D3", "=B3*C3"], ["D4", "=B4*C4"], ["D5", "=B5*C5"], ["D6", "=SUM(D2:D5)"]]),
-  (s) => ({ ...s, scripts: [script(30, 30, B("flag"), B("move", "100"), B("sayfor", "Hello!", "2"))] }),
-  (s) => ({ ...s, code: s.code.replace("___", "Sari") + 'print("I like football")\n' }),
+  (s) => XS.setMany(s, [["B10", "=SUM(B2:B8)"], ["B11", "=AVERAGE(B2:B8)"], ["B12", "=MAX(B2:B8)"], ["B13", "=MIN(B2:B8)"], ["B14", "=COUNT(B2:B8)"]]),
+  (s) => runOK({ ...s, scripts: [script(30, 30, B("flag"), B("move", "100"), B("sayfor", "Hello!", "2"))] }),
+  (s) => runOK({ ...s, scripts: [script(20, 20, B("flag"), B("goto", "-50", "-50"), B("point", "90"), B("repeat", "4", { s1: [B("move", "100"), B("turnR", "90"), B("wait", "0.5")] }))] }),
+  (s) => runOK({ ...s, scripts: [script(20, 20, B("flag"), B("goto", "-150", "0"), B("forever", { s1: [B("if", { b: B("touching", "Apple"), s1: [B("say", "Yum!")] })] })), script(20, 200, B("keyhat", "right arrow"), B("chx", "10")), script(260, 200, B("keyhat", "left arrow"), B("chx", "-10"))] }, ["right arrow"]),
+  (s) => pyOK({ ...s, code: s.code + 'print("Hello, World!")\n' }),
+  (s) => pyOK({ ...s, code: s.code + 'print("Sari")\nprint(25 + 17)\n' }),
+  (s) => pyOK({ ...s, code: 'name = "Sari"\nprint("Hello, " + name + "!")\nhobby = "football"\nprint("I like " + hobby)\n' }),
   (s) => XS.setMany(s, [["D2", "=C2-B2"], ["D3", "=C3-B3"], ["D4", "=C4-B4"], ["D5", "=C5-B5"], ["D6", "=C6-B6"], ["D7", "=SUM(D2:D6)"]]),
   (s) => XS.setMany(s, [["B11", "=AVERAGE(B2:B9)"], ["B12", "=MAX(B2:B9)"], ["B13", "=MIN(B2:B9)"]]),
-  (s) => XS.setMany(s, [2, 3, 4, 5, 6, 7].flatMap((r) => [["F" + r, `=SUM(B${r}:E${r})`], ["G" + r, `=COUNT(B${r}:E${r})`]]).concat([["F9", "=SUM(F2:F7)"]])),
-  (s) => XS.setMany(s, [["D2", "=B2*C2"], ["D3", "=B3*C3"], ["D4", "=B4*C4"], ["D5", "=B5*C5"], ["D6", "=SUM(D2:D5)"]]),
-  (s) => ({ ...s, scripts: [script(30, 30, B("flag"), B("move", "250"), B("turnL", "90"), B("move", "180"), B("sayfor", "I made it!", "2"))] }),
-  (s) => ({ ...s, scripts: [script(30, 30, B("flag"), B("repeat", "6", { s1: [B("move", "60"), B("wait", "0.5")] }))] }),
-  (s) => ({ ...s, scripts: [script(30, 30, B("keyhat", "right arrow"), B("chx", "10")), script(30, 120, B("keyhat", "left arrow"), B("chx", "-10")), script(260, 30, B("keyhat", "up arrow"), B("chy", "10")), script(260, 120, B("keyhat", "down arrow"), B("chy", "-10"))] }),
-  (s) => ({ ...s, scripts: [script(30, 20, B("flag"), B("forever", { s1: [B("move", "5"), B("if", { b: B("touching", "edge"), s1: [B("turnR", "180")] })] }))] }),
-  (s) => ({ ...s, scripts: [script(30, 20, B("flag"), B("goto", "-200", "0"), B("repeat", "130", { s1: [B("chx", "3"), B("ifelse", { b: B("touchc", "#E74C3C"), s1: [B("say", "Hot!")], s2: [B("say", "Safe")] })] }))] }),
-  (s) => ({ ...s, code: s.code + "print(7 * 8)\nprint(100 / 4)\n" }),
-  (s) => ({ ...s, code: s.code + 'print(name + " likes " + food)\n' }),
-  (s) => ({ ...s, code: 'name = input("What is your name? ")\nprint("Hello, " + name + "!")\nfood = input("What is your favourite food? ")\nprint(name + " likes " + food)\n' }),
+  (s) => XS.setMany(s, [3, 4, 5, 6, 7].map((r) => ["E" + r, `=MAX(B${r}:D${r})`]).concat([2, 3, 4, 5, 6, 7].map((r) => ["F" + r, `=COUNT(B${r}:D${r})`]), [["E9", "=MAX(E2:E7)"]])),
+  (s) => XS.setMany(s, [["B9", "=SUM(B2:B7)"], ["B10", "=AVERAGE(B2:B7)"], ["B11", "=MAX(B2:B7)"], ["B12", "=MIN(B2:B7)"], ["B13", "=COUNT(B2:B7)"]]),
+  (s) => runOK({ ...s, scripts: [script(20, 20, B("flag"), B("goto", "-150", "-100"), B("point", "90"), B("move", "250"), B("turnL", "90"), B("move", "180"))] }),
+  (s) => runOK({ ...s, scripts: [script(20, 20, B("flag"), B("goto", "-180", "-70"), B("repeat", "6", { s1: [B("move", "60"), B("wait", "0.5")] }))] }),
+  (s) => runOK({ ...s, scripts: [script(20, 20, B("flag"), B("goto", "0", "0")), script(20, 130, B("keyhat", "right arrow"), B("chx", "10")), script(20, 220, B("keyhat", "left arrow"), B("chx", "-10")), script(260, 130, B("keyhat", "up arrow"), B("chy", "10")), script(260, 220, B("keyhat", "down arrow"), B("chy", "-10"))] }, ["left arrow", "up arrow", "down arrow"]),
+  (s) => runOK({ ...s, scripts: [script(20, 20, B("flag"), B("goto", "0", "0"), B("point", "90"), B("forever", { s1: [B("move", "5"), B("if", { b: B("touching", "edge"), s1: [B("turnR", "180")] })] }))] }),
+  (s) => runOK({ ...s, scripts: [script(20, 20, B("flag"), B("goto", "-200", "0"), B("repeat", "130", { s1: [B("chx", "3"), B("ifelse", { b: B("touchc", "#E74C3C"), s1: [B("say", "Hot!")], s2: [B("say", "Safe")] })] }))] }),
+  (s) => pyOK({ ...s, code: s.code + "print(7 * 8)\nprint(100 / 4)\n" }),
+  (s) => pyOK({ ...s, code: s.code + 'print(name + " likes " + food)\n' }),
+  (s) => pyOK({ ...s, code: 'name = input("What is your name? ")\nprint("Hello, " + name + "!")\nfood = input("What is your favourite food? ")\nprint(name + " likes " + food)\n' }),
 ];
 LEVELS.forEach((L, i) => { L.solve = () => SOLVE[i](L.start()); L.files = null; });
 </script>
@@ -1441,6 +1567,8 @@ const NLV = LEVELS.length;
 // teacher-led levels: the first TEACH levels are taught together; only the levels after them are raced and scored
 const TEACH = (() => { let n = 0; while (n < LEVELS.length && LEVELS[n].teach) n++; return n; })();
 const RACE_N = NLV - TEACH;
+function canOpen(i) { const R = G.race; if (TEACH && R && (R.phase === "teach" || R.phase === "lobby")) return R.phase === "teach" && i === R.teachLvl; return i <= G.prog.unlocked; }
+function toast2(t) { const d = document.createElement("div"); d.textContent = t; d.style.cssText = "position:fixed;left:50%;top:70px;transform:translateX(-50%);background:#1e293b;color:#fff;border:1px solid #475569;padding:10px 18px;border-radius:10px;z-index:999;font-size:16px;font-weight:700"; document.body.appendChild(d); setTimeout(() => d.remove(), 2500); }
 function maxOpen() { const R = G.race; if (!TEACH || !R || R.phase === "live" || R.phase === "end") return NLV - 1; return R.phase === "teach" ? Math.min(R.teachLvl, TEACH - 1) : -1; }
 const raceDone = () => Object.keys(G.prog.done).map(Number).filter((k) => k >= TEACH);
 const raceStars = () => raceDone().reduce((a, k) => a + G.prog.done[k], 0);
@@ -1549,9 +1677,9 @@ function startGame(key) {
 function renderDots() {
   const d = $("dots"); d.innerHTML = "";
   LEVELS.forEach((L, i) => {
-    const b = document.createElement("button"); b.className = "dot" + (G.prog.done[i] ? " done" : "") + (i === G.lvl ? " cur" : "") + (i > G.prog.unlocked ? " lock" : "");
+    const b = document.createElement("button"); b.className = "dot" + (G.prog.done[i] ? " done" : "") + (i === G.lvl ? " cur" : "") + (!canOpen(i) && i !== G.lvl ? " lock" : "");
     b.textContent = i + 1; b.title = `Level ${i + 1}: ${L.title}` + (G.prog.done[i] ? ` (${"★".repeat(G.prog.done[i])})` : "");
-    b.onclick = () => { if (i <= G.prog.unlocked) openLevel(i); };
+    b.onclick = () => { if (canOpen(i)) openLevel(i); else if (G.race && G.race.phase === "teach") toast2(`Stay on Level ${G.race.teachLvl + 1} with your teacher for now.`); };
     d.appendChild(b);
   });
   $("starPill").textContent = "★ " + totalStars() + " / " + LEVELS.length * 3;
@@ -1715,6 +1843,7 @@ function hostCreate() {
   netHost("cq", hostConn).then((net) => {
     clearTimeout(failT); H.net = net; H.code = net.code; show("hostLobby");
     $("joinUrl").textContent = (location.origin + location.pathname).replace(/^https?:\/\//, "").replace(/index\.html$/, "");
+    document.querySelectorAll(".joinLink").forEach((el) => (el.textContent = $("joinUrl").textContent));
     $("bigCode").textContent = H.code; $("liveCode").textContent = H.code; renderChips();
   }).catch(() => { clearTimeout(failT); $("hostErr").textContent = "Could not reach the game server. Check the internet and try again."; $("createBtn").disabled = false; });
   window.onbeforeunload = () => (H.phase !== "end" ? "The race will end if you leave." : undefined);
