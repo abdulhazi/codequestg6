@@ -49,6 +49,7 @@ code{font-family:var(--mono);background:#0B1222;border-radius:5px;padding:1px 5p
 .dot.cur{border-color:var(--yellow);color:var(--yellow);box-shadow:0 0 0 3px rgba(250,204,21,.25)}
 .dot.done.cur{color:var(--bg)}
 .dot.lock{opacity:.35;cursor:not-allowed}
+.dot.skip:not(.done){border-color:#f59e0b;color:#f59e0b}
 .pill{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:800;font-size:15px;white-space:nowrap}
 .pill.stars{color:var(--yellow)}
 .main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
@@ -187,7 +188,7 @@ th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}th{co
       <div class="card task">
         <div class="h"><span class="tag" id="lvTag"></span><b id="lvTitle"></b><span class="mode" id="lvMode"></span></div>
         <p id="lvIntro"></p>
-        <div class="hintrow"><button class="btn ghost" id="hintBtn" style="padding:6px 12px;font-size:14px">💡 Hint (costs a star)</button><span class="muted" id="hintLeft" style="font-size:13px"></span></div>
+        <div class="hintrow"><button class="btn ghost" id="hintBtn" style="padding:6px 12px;font-size:14px">💡 Hint (costs a star)</button><span class="muted" id="hintLeft" style="font-size:13px"></span><button class="btn ghost hidden" id="skipBtn" style="padding:6px 12px;font-size:14px;margin-left:auto" title="Stuck? Move on to the next level. You get 0★ for this one, and you can come back to it later.">⏭ Skip level</button></div>
         <div id="hints"></div>
         <div style="margin-top:10px;display:flex;gap:8px"><button class="btn ghost small" id="resetBtn" style="font-size:13px;padding:6px 10px">↺ Reset level</button><span id="colourWarn" class="hidden"></span></div>
       </div>
@@ -1677,8 +1678,8 @@ function startGame(key) {
 function renderDots() {
   const d = $("dots"); d.innerHTML = "";
   LEVELS.forEach((L, i) => {
-    const b = document.createElement("button"); b.className = "dot" + (G.prog.done[i] ? " done" : "") + (i === G.lvl ? " cur" : "") + (!canOpen(i) && i !== G.lvl ? " lock" : "");
-    b.textContent = i + 1; b.title = `Level ${i + 1}: ${L.title}` + (G.prog.done[i] ? ` (${"★".repeat(G.prog.done[i])})` : "");
+    const b = document.createElement("button"); b.className = "dot" + (G.prog.done[i] ? " done" : "") + (G.prog.skip && G.prog.skip[i] ? " skip" : "") + (i === G.lvl ? " cur" : "") + (!canOpen(i) && i !== G.lvl ? " lock" : "");
+    b.textContent = i + 1; b.title = `Level ${i + 1}: ${L.title}` + (G.prog.done[i] ? ` (${"★".repeat(G.prog.done[i])})` : G.prog.skip && G.prog.skip[i] ? " (skipped, come back later)" : "");
     b.onclick = () => { if (canOpen(i)) openLevel(i); else if (G.race && G.race.phase === "teach") toast2(`Stay on Level ${G.race.teachLvl + 1} with your teacher for now.`); };
     d.appendChild(b);
   });
@@ -1706,8 +1707,16 @@ function renderHints() {
   $("hints").innerHTML = L.hints.slice(0, used).map((h) => `<div class="hint"></div>`).join("");
   [...$("hints").children].forEach((el, k) => (el.textContent = "💡 " + L.hints[k]));
   $("hintBtn").disabled = used >= L.hints.length || !!G.prog.done[G.lvl];
+  const sk = $("skipBtn"); if (sk) sk.classList.toggle("hidden", !!G.prog.done[G.lvl] || G.lvl >= LEVELS.length - 1 || G.lvl + 1 > maxOpen()); if (sk) { sk.dataset.arm = ""; sk.textContent = "⏭ Skip level"; }
   $("hintLeft").textContent = G.prog.done[G.lvl] ? "Level complete" : used >= L.hints.length ? "No more hints" : `${L.hints.length - used} hint${L.hints.length - used > 1 ? "s" : ""} left · this level is worth ${starsFor(G.lvl)}★`;
 }
+// Skip: for when a student is stuck (or a check misbehaves). 0★ for this level, the next one opens, they can come back later.
+if ($("skipBtn")) $("skipBtn").onclick = () => {
+  const b = $("skipBtn"), i = G.lvl; if (G.prog.done[i] || i >= LEVELS.length - 1 || i + 1 > maxOpen()) return;
+  if (!b.dataset.arm) { b.dataset.arm = "1"; b.textContent = "Click again to skip (0★)"; clearTimeout(b._t); b._t = setTimeout(() => { b.dataset.arm = ""; b.textContent = "⏭ Skip level"; }, 4000); return; }
+  G.prog.skip = G.prog.skip || {}; G.prog.skip[i] = true; G.prog.unlocked = Math.max(G.prog.unlocked, i + 1); saveProgress(); raceSend();
+  openLevel(i + 1); toast2(`Skipped Level ${i + 1}. It's amber at the top, so you can come back to it later.`);
+};
 $("hintBtn").onclick = () => { if (G.prog.done[G.lvl]) return; G.prog.hints[G.lvl] = (G.prog.hints[G.lvl] || 0) + 1; saveProgress(); renderHints(); raceSend(); };
 
 // ---------------- the Excel / Scratch / Python lab ----------------
